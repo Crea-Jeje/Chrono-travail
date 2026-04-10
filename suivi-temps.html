@@ -1,0 +1,1868 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0a0f18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Chrono Travail</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async
+  onload="window._gsiReady=true; if(window._gapiReady) window._driveLibsReady()">
+</script>
+<script src="https://apis.google.com/js/api.js"
+  onload="gapi.load('client', function(){ window._gapiClientReady=true; if(window._gsiReady) window._driveLibsReady(); })">
+</script>
+<style>
+:root {
+  --bg:#0a0f18; --surface:#111824; --card:#161f2e; --border:#1e2d42;
+  --accent:#00d4aa; --accent2:#ff6b6b; --accent3:#ffd166; --accent4:#a78bfa;
+  --conge:#f97316; --ferie:#60a5fa; --rtt:#c084fc;
+  --text:#e8edf5; --text-dim:#6b7f96; --text-muted:#3a4d62;
+  --mono:'DM Mono',monospace; --sans:'Syne',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100dvh;overflow-x:hidden;padding-bottom:70px;}
+
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 16px 10px;position:sticky;top:0;z-index:100;}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.logo{font-size:18px;font-weight:800;letter-spacing:-.5px;}
+.logo span{color:var(--accent);}
+.today-badge{background:var(--accent);color:#000;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;font-family:var(--mono);}
+.tabs{display:flex;gap:3px;}
+.tab{flex:1;background:none;border:1px solid var(--border);color:var(--text-dim);font-family:var(--sans);font-size:10px;font-weight:600;padding:7px 2px;border-radius:8px;cursor:pointer;transition:all .2s;}
+.tab.active{background:var(--accent);border-color:var(--accent);color:#000;}
+
+.screen{display:none;padding:14px;animation:fadeUp .2s ease;}
+.screen.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* DATE */
+.date-display{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.date-main{font-size:19px;font-weight:700;letter-spacing:-.5px;}
+.date-sub{font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px;}
+.date-nav{display:flex;gap:5px;}
+.btn-nav{height:32px;min-width:32px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:9px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0 8px;}
+.btn-nav:active{background:var(--border);transform:scale(.95);}
+.btn-nav.sm{font-size:10px;font-family:var(--mono);}
+
+/* ABSENCE BTNS */
+.absence-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;margin-bottom:12px;}
+.btn-abs{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 2px;font-family:var(--sans);font-size:10px;font-weight:700;cursor:pointer;transition:all .2s;text-align:center;color:var(--text-dim);}
+.btn-abs.a-conge{background:#f9731622;border-color:#f97316;color:#f97316;}
+.btn-abs.a-ferie{background:#60a5fa22;border-color:#60a5fa;color:#60a5fa;}
+.btn-abs.a-rtt{background:#c084fc22;border-color:#c084fc;color:#c084fc;}
+.btn-abs.a-periode{background:var(--accent4)22;border-color:var(--accent4);color:var(--accent4);}
+.btn-abs:active{transform:scale(.97);}
+
+/* ABSENCE BANNER */
+.absence-banner{border-radius:12px;padding:11px 14px;margin-bottom:12px;border:1px solid;}
+.ab-conge{background:#f9731612;border-color:#f9731640;}
+.ab-ferie{background:#60a5fa12;border-color:#60a5fa40;}
+.ab-rtt{background:#c084fc12;border-color:#c084fc40;}
+.ab-label{font-size:13px;font-weight:700;}
+.ab-conge .ab-label{color:var(--conge);} .ab-ferie .ab-label{color:var(--ferie);} .ab-rtt .ab-label{color:var(--rtt);}
+.ab-sub{font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px;}
+
+/* CARDS */
+.period-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
+.period-card.dimmed{opacity:.4;pointer-events:none;}
+.period-label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.period-label.pm{color:var(--accent3);}
+.period-label::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+.time-row{display:flex;gap:8px;align-items:flex-end;}
+.time-field{flex:1;}
+.time-field label{display:block;font-size:9px;color:var(--text-dim);font-family:var(--mono);margin-bottom:5px;letter-spacing:.5px;}
+.time-field input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:var(--mono);font-size:19px;font-weight:500;padding:10px 4px;text-align:center;transition:border-color .2s;}
+.time-field input:focus{outline:none;border-color:var(--accent);}
+.time-field input::-webkit-calendar-picker-indicator{display:none;}
+.quick-now{background:none;border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:10px;padding:5px 7px;border-radius:7px;cursor:pointer;white-space:nowrap;transition:all .15s;margin-top:18px;}
+.quick-now:active{background:var(--border);}
+.duration-bar{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-top:8px;display:flex;align-items:center;justify-content:space-between;}
+.duration-label{font-size:10px;color:var(--text-dim);}
+.duration-value{font-family:var(--mono);font-size:16px;font-weight:500;color:var(--accent);}
+
+.day-total{background:linear-gradient(135deg,#00d4aa12,#00d4aa05);border:1px solid #00d4aa28;border-radius:14px;padding:16px;margin:12px 0;text-align:center;}
+.day-total-label{font-size:10px;color:var(--accent);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;}
+.day-total-value{font-family:var(--mono);font-size:36px;font-weight:500;color:var(--text);letter-spacing:-1px;}
+.day-total-diff{font-size:11px;font-family:var(--mono);margin-top:3px;}
+.positive{color:var(--accent);} .negative{color:var(--accent2);}
+
+.btn-save{width:100%;background:var(--accent);color:#000;border:none;border-radius:13px;font-family:var(--sans);font-size:14px;font-weight:700;padding:14px;cursor:pointer;transition:all .2s;}
+.btn-save:active{transform:scale(.98);opacity:.9;}
+
+/* CUMUL */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;}
+.stat-card.full{grid-column:1/-1;}
+.stat-label{font-size:9px;color:var(--text-dim);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.stat-value{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--text);}
+.stat-value.accent{color:var(--accent);} .stat-value.warn{color:var(--accent3);} .stat-value.danger{color:var(--accent2);}
+.stat-sub{font-size:10px;color:var(--text-muted);font-family:var(--mono);margin-top:2px;}
+
+.abs-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px;}
+.abs-card{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:10px 6px;text-align:center;}
+.abs-card-lbl{font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px;}
+.abs-card-lbl.c{color:var(--conge);} .abs-card-lbl.r{color:var(--rtt);} .abs-card-lbl.f{color:var(--ferie);}
+.abs-card-val{font-family:var(--mono);font-size:22px;font-weight:500;}
+.abs-card-val.c{color:var(--conge);} .abs-card-val.r{color:var(--rtt);} .abs-card-val.f{color:var(--ferie);}
+
+.week-graph{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:4px;}
+.bars-week{display:flex;align-items:flex-end;gap:5px;height:90px;}
+.bw-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end;}
+.bw{width:100%;border-radius:5px 5px 2px 2px;transition:height .4s cubic-bezier(.34,1.3,.64,1);min-height:2px;}
+.bw.work{background:var(--accent);}
+.bw.low{background:var(--accent2);} .bw.ok{background:var(--accent3);}
+.bw.conge{background:var(--conge);} .bw.ferie{background:var(--ferie);} .bw.rtt{background:var(--rtt);}
+.bw-val{font-family:var(--mono);font-size:8px;color:var(--text-dim);}
+.bw-lbl{font-family:var(--mono);font-size:8px;color:var(--text-muted);}
+
+/* GRAPHIQUES */
+.graph-section{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;}
+.graph-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap;}
+.graph-title{font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--text-dim);text-transform:uppercase;}
+.gtabs{display:flex;gap:3px;}
+.gtab{background:none;border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:10px;padding:4px 8px;border-radius:6px;cursor:pointer;transition:all .15s;}
+.gtab.active{background:var(--accent);border-color:var(--accent);color:#000;}
+
+.year-select{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:5px 8px;border-radius:7px;cursor:pointer;}
+
+/* BAR CHART */
+.bar-chart{display:flex;align-items:flex-end;gap:3px;height:130px;padding-bottom:22px;position:relative;overflow:visible;}
+.bar-chart::after{content:'';position:absolute;bottom:22px;left:0;right:0;height:1px;background:var(--border);}
+.bc-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;height:100%;justify-content:flex-end;position:relative;}
+.bc-bar{width:100%;border-radius:4px 4px 2px 2px;transition:height .5s cubic-bezier(.34,1.3,.64,1);min-height:2px;cursor:pointer;position:relative;}
+.bc-bar::after{content:attr(data-tip);position:absolute;bottom:calc(100%+4px);left:50%;transform:translateX(-50%);background:#0f1923;border:1px solid var(--border);border-radius:6px;font-family:var(--mono);font-size:9px;color:var(--text);padding:3px 7px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s;z-index:10;}
+.bc-bar:hover::after,.bc-bar:active::after{opacity:1;}
+.bc-bar.work{background:var(--accent);}
+.bc-bar.low{background:var(--accent2);} .bc-bar.ok{background:var(--accent3);}
+.bc-bar.conge-bar{background:var(--conge);} .bc-bar.ferie-bar{background:var(--ferie);} .bc-bar.rtt-bar{background:var(--rtt);}
+.bc-val{font-family:var(--mono);font-size:8px;color:var(--text-dim);white-space:nowrap;}
+.bc-lbl{position:absolute;bottom:-18px;font-family:var(--mono);font-size:8px;color:var(--text-muted);}
+
+/* LINE CHART */
+.line-wrap{position:relative;height:140px;margin-bottom:6px;overflow:visible;}
+svg.lc{width:100%;height:100%;overflow:visible;}
+
+/* DONUT */
+.donut-wrap{display:flex;align-items:center;gap:16px;padding:4px 0;}
+.donut-legend-item{display:flex;align-items:center;gap:6px;margin-bottom:7px;}
+.donut-legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+
+.legend{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px;}
+.leg-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text-dim);}
+.leg-dot{width:8px;height:8px;border-radius:2px;}
+
+/* HISTORIQUE */
+.history-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.history-title{font-size:13px;font-weight:700;color:var(--text-dim);}
+.entry-list{display:flex;flex-direction:column;gap:7px;}
+.entry-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color .15s;}
+.entry-item:active{border-color:var(--accent);}
+.entry-date-col{width:34px;text-align:center;flex-shrink:0;}
+.entry-day-num{font-size:18px;font-weight:700;line-height:1;font-family:var(--mono);}
+.entry-day-name{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.5px;}
+.entry-sep{width:1px;height:32px;background:var(--border);flex-shrink:0;}
+.entry-times{flex:1;font-family:var(--mono);font-size:11px;color:var(--text-dim);line-height:1.6;}
+.entry-total{font-family:var(--mono);font-size:14px;font-weight:500;text-align:right;flex-shrink:0;color:var(--text);}
+.et-good{color:var(--accent);} .et-low{color:var(--accent2);}
+.et-conge{color:var(--conge);} .et-ferie{color:var(--ferie);} .et-rtt{color:var(--rtt);}
+.el-conge{border-left:3px solid var(--conge);}
+.el-ferie{border-left:3px solid var(--ferie);}
+.el-rtt{border-left:3px solid var(--rtt);}
+.el-good{border-left:3px solid var(--accent);}
+.el-low{border-left:3px solid var(--accent2);}
+.el-wknd{opacity:.35;border-style:dashed;}
+.btn-del{background:none;border:1px solid var(--border);color:var(--accent2);font-size:12px;width:26px;height:26px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+input[type="month"]{background:var(--card);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:11px;padding:5px 8px;border-radius:7px;cursor:pointer;}
+input[type="month"]:focus{outline:none;border-color:var(--accent);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:#000b;z-index:200;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px 20px 0 0;padding:20px 16px 36px;width:100%;transform:translateY(40px);transition:transform .25s cubic-bezier(.34,1.2,.64,1);}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:14px;}
+.type-sel{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px;}
+.topt{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:8px 4px;text-align:center;cursor:pointer;transition:all .15s;font-size:11px;font-weight:700;color:var(--text-dim);}
+.topt.tc{background:#f9731622;border-color:#f97316;color:#f97316;}
+.topt.tf{background:#60a5fa22;border-color:#60a5fa;color:#60a5fa;}
+.topt.tr{background:#c084fc22;border-color:#c084fc;color:#c084fc;}
+.modal-row{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+.modal-lbl{font-size:10px;color:var(--text-dim);font-family:var(--mono);letter-spacing:.5px;}
+.modal-inp{background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--mono);font-size:14px;padding:10px 12px;width:100%;}
+.modal-inp:focus{outline:none;border-color:var(--accent);}
+.modal-btns{display:flex;gap:8px;margin-top:8px;}
+.btn-mc{flex:1;background:var(--card);border:1px solid var(--border);color:var(--text-dim);font-family:var(--sans);font-size:13px;font-weight:600;padding:12px;border-radius:11px;cursor:pointer;}
+.btn-mo{flex:2;background:var(--accent);border:none;color:#000;font-family:var(--sans);font-size:13px;font-weight:700;padding:12px;border-radius:11px;cursor:pointer;}
+
+.section-title{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin:14px 0 8px;}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--accent);color:#000;font-family:var(--mono);font-size:12px;font-weight:500;padding:10px 18px;border-radius:11px;z-index:400;transition:transform .3s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.empty-state{text-align:center;padding:36px 16px;color:var(--text-muted);font-size:13px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="logo">Chrono<span>.</span></div>
+    <div class="today-badge" id="todayBadge">—</div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showScreen('saisie',this)">✏️ Saisie</button>
+    <button class="tab" onclick="showScreen('bilan',this)">📝 Bilan</button>
+    <button class="tab" onclick="showScreen('cumul',this)">📊 Cumul</button>
+    <button class="tab" onclick="showScreen('graphiques',this)">📈 Stats</button>
+    <button class="tab" onclick="showScreen('humeurs',this)">😊 Humeurs</button>
+    <button class="tab" onclick="showScreen('historique',this)">📋 Histo.</button>
+    <button class="tab" onclick="showScreen('parametres',this)">⚙️</button>
+  </div>
+</div>
+
+<!-- SAISIE -->
+<div class="screen active" id="screen-saisie">
+  <div class="date-display">
+    <div>
+      <div class="date-main" id="displayDate">—</div>
+      <div class="date-sub" id="displayDateSub">—</div>
+    </div>
+    <div class="date-nav">
+      <button class="btn-nav" onclick="changeDay(-1)">‹</button>
+      <button class="btn-nav sm" onclick="goToday()">Auj.</button>
+      <button class="btn-nav" onclick="changeDay(1)">›</button>
+    </div>
+  </div>
+
+  <!-- BANNIÈRE BILAN VENDREDI -->
+  <div id="bilanFridayBanner" style="display:none;background:linear-gradient(135deg,#ffd16618,#ffd16608);border:1px solid #ffd16640;border-radius:12px;padding:12px 14px;margin-bottom:12px;cursor:pointer;" onclick="switchToBilan()">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--accent3);">📝 C'est vendredi — Bilan de semaine ?</div>
+        <div style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-top:2px;">Tapez pour rédiger votre bilan</div>
+      </div>
+      <div style="font-size:20px;">›</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px;">
+    <button class="btn-abs" id="bConge" onclick="toggleAbs('conge')">🏖 Congé J.</button>
+    <button class="btn-abs" id="bCongeM" onclick="toggleAbs('conge-matin')">🏖 Congé ½M</button>
+    <button class="btn-abs" id="bCongeAM" onclick="toggleAbs('conge-am')">🏖 Congé ½AM</button>
+    <button class="btn-abs" id="bFerie" onclick="toggleAbs('ferie')">🎉 Férié</button>
+    <button class="btn-abs" id="bRtt" onclick="toggleAbs('rtt')">🔄 RTT J.</button>
+    <button class="btn-abs" id="bRttM" onclick="toggleAbs('rtt-matin')">🔄 RTT ½M</button>
+    <button class="btn-abs" id="bRttAM" onclick="toggleAbs('rtt-am')">🔄 RTT ½AM</button>
+    <button class="btn-abs a-periode" onclick="openModal()">📅 Période</button>
+  </div>
+
+  <div id="absBanner" style="display:none"></div>
+
+  <div class="period-card" id="cardMatin">
+    <div class="period-label">Matin</div>
+    <div class="time-row">
+      <div class="time-field"><label>DÉBUT</label><input type="time" id="hdm" step="60" onchange="updateCalcs()"></div>
+      <div class="time-field"><label>FIN</label><input type="time" id="hfm" step="60" onchange="updateCalcs()"></div>
+      <button class="quick-now" onclick="setNow('hdm')">⏱ Maint.</button>
+    </div>
+    <div class="duration-bar"><span class="duration-label">Durée matin</span><span class="duration-value" id="durM">—</span></div>
+  </div>
+
+  <div class="period-card" id="cardAM">
+    <div class="period-label pm">Après-midi</div>
+    <div class="time-row">
+      <div class="time-field"><label>DÉBUT</label><input type="time" id="hdam" step="60" onchange="updateCalcs()"></div>
+      <div class="time-field"><label>FIN</label><input type="time" id="hfam" step="60" onchange="updateCalcs()"></div>
+      <button class="quick-now" onclick="setNow('hfam')">⏱ Maint.</button>
+    </div>
+    <div class="duration-bar"><span class="duration-label">Durée après-midi</span><span class="duration-value" id="durAM">—</span></div>
+  </div>
+
+  
+  <!-- HUMEUR DU JOUR (saisie des horaires) -->
+  <div class="period-card" id="humeurCard">
+    <div class="period-label" style="color:var(--accent3)">Ressenti de fin de journée</div>
+    <div id="humeurZone" style="display:flex;flex-wrap:wrap;gap:7px;justify-content:center;padding:4px 0;"></div>
+    <div id="humeurSelected" style="text-align:center;font-size:11px;color:var(--text-muted);font-family:var(--mono);margin-top:8px;min-height:16px;"></div>
+  </div>
+
+  <div class="day-total">
+    <div class="day-total-label">Total du jour</div>
+    <div class="day-total-value" id="totalJ">0h00</div>
+    <div class="day-total-diff" id="diffJ"></div>
+  </div>
+
+  <button class="btn-save" onclick="saveEntry()">💾 Enregistrer</button>
+</div>
+
+<!-- CUMUL -->
+<div class="screen" id="screen-cumul">
+  <div style="display:flex;gap:6px;margin-bottom:12px;align-items:center;">
+    <div style="flex:1;">
+      <div style="font-size:9px;color:var(--text-dim);font-family:var(--mono);margin-bottom:4px;">DU</div>
+      <input type="month" id="cumulFrom" onchange="updateCumul()" style="width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 8px;border-radius:8px;">
+    </div>
+    <div style="flex:1;">
+      <div style="font-size:9px;color:var(--text-dim);font-family:var(--mono);margin-bottom:4px;">AU</div>
+      <input type="month" id="cumulTo" onchange="updateCumul()" style="width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 8px;border-radius:8px;">
+    </div>
+    <button onclick="resetCumulFilter()" style="background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:7px 10px;cursor:pointer;font-size:11px;margin-top:14px;">✕</button>
+  </div>
+  <div class="section-title">Temps de travail</div>
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-label">Cette semaine</div><div class="stat-value accent" id="cSem">—</div></div>
+    <div class="stat-card"><div class="stat-label">Ce mois</div><div class="stat-value" id="cMois">—</div></div>
+    <div class="stat-card"><div class="stat-label">Solde vs 7h/j</div><div class="stat-value" id="cSolde">—</div><div class="stat-sub" id="cSoldeSub"></div></div>
+    <div class="stat-card"><div class="stat-label">Moyenne/jour</div><div class="stat-value warn" id="cMoy">—</div></div>
+    <div class="stat-card full"><div class="stat-label">Cumul total</div><div class="stat-value accent" id="cTot">—</div><div class="stat-sub" id="cJours"></div></div>
+  </div>
+  <div class="section-title">Absences</div>
+  <div class="abs-grid">
+    <div class="abs-card"><div class="abs-card-lbl c">Congés</div><div class="abs-card-val c" id="nConge">0</div><div class="stat-sub">jours</div></div>
+    <div class="abs-card"><div class="abs-card-lbl r">RTT</div><div class="abs-card-val r" id="nRtt">0</div><div class="stat-sub">jours</div></div>
+    <div class="abs-card"><div class="abs-card-lbl f">Fériés</div><div class="abs-card-val f" id="nFerie">0</div><div class="stat-sub">jours</div></div>
+  </div>
+  <div class="section-title">Semaine en cours</div>
+  <div class="week-graph"><div class="bars-week" id="weekBars"></div></div>
+</div>
+
+<!-- GRAPHIQUES -->
+<div class="screen" id="screen-graphiques">
+
+  <div class="graph-section">
+    <div class="graph-header">
+      <div class="graph-title">Heures par mois</div>
+      <div class="gtabs">
+        <button class="gtab active" onclick="setGMode('heures',this)">Heures</button>
+        <button class="gtab" onclick="setGMode('solde',this)">Solde</button>
+        <button class="gtab" onclick="setGMode('abs',this)">Absences</button>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <select class="year-select" id="yearSel" onchange="renderGraphs()"></select>
+      <div class="legend" id="gLegend"></div>
+    </div>
+    <div class="bar-chart" id="mChart"></div>
+  </div>
+
+  <div class="graph-section">
+    <div class="graph-header">
+      <div class="graph-title">Comparaison par année</div>
+    </div>
+    <div class="line-wrap">
+      <svg class="lc" id="lcSvg" viewBox="0 0 300 120" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="legend" id="lcLegend"></div>
+  </div>
+
+  <div class="graph-section">
+    <div class="graph-header">
+      <div class="graph-title">Répartition des absences</div>
+    </div>
+    <div class="donut-wrap">
+      <canvas id="donut" width="100" height="100" style="flex-shrink:0;"></canvas>
+      <div id="donutLeg" style="flex:1;"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- HISTORIQUE -->
+<div class="screen" id="screen-historique">
+  <div style="display:flex;gap:6px;margin-bottom:12px;align-items:flex-end;">
+    <div style="flex:1;">
+      <div style="font-size:9px;color:var(--text-dim);font-family:var(--mono);margin-bottom:4px;">DU MOIS</div>
+      <input type="month" id="histFrom" onchange="renderHistory()" style="width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 8px;border-radius:8px;">
+    </div>
+    <div style="flex:1;">
+      <div style="font-size:9px;color:var(--text-dim);font-family:var(--mono);margin-bottom:4px;">AU MOIS</div>
+      <input type="month" id="histTo" onchange="renderHistory()" style="width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 8px;border-radius:8px;">
+    </div>
+    <button onclick="resetHistFilter()" style="background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:7px 10px;cursor:pointer;font-size:11px;">✕</button>
+  </div>
+  <div id="histStats" style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:12px;display:flex;gap:12px;justify-content:space-around;"></div>
+  <div class="entry-list" id="entryList"></div>
+</div>
+
+
+<!-- BILAN SEMAINE -->
+<div class="screen" id="screen-bilan">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;">
+    <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:4px;">📝 Bilan de la semaine</div>
+    <div style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-bottom:14px;" id="bilanWeekLabel">—</div>
+    
+    <div style="margin-bottom:12px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#00d4aa;margin-bottom:8px;">🏆 Réussites</div>
+      <textarea id="bilanReussite" placeholder="Ce qui s'est bien passé cette semaine…" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--sans);font-size:13px;padding:12px;resize:vertical;min-height:90px;line-height:1.5;" oninput="autoResize(this)"></textarea>
+    </div>
+    
+    <div style="margin-bottom:14px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#ffd166;margin-bottom:8px;">🚀 Points de progrès</div>
+      <textarea id="bilanProgres" placeholder="Ce que je veux améliorer la semaine prochaine…" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:var(--sans);font-size:13px;padding:12px;resize:vertical;min-height:90px;line-height:1.5;" oninput="autoResize(this)"></textarea>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:14px;" id="bilanStatsZone"></div>
+
+    <button class="btn-save" onclick="saveBilan()">💾 Enregistrer le bilan</button>
+  </div>
+
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;">
+    <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;">📚 Bilans précédents</div>
+    <div id="bilanHistory"></div>
+  </div>
+</div>
+
+<!-- PARAMÈTRES -->
+<div class="screen" id="screen-parametres">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;">
+    <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);margin-bottom:14px;">⚙️ Paramètres</div>
+    
+    <div style="margin-bottom:14px;">
+      <div style="font-size:10px;color:var(--text-dim);font-family:var(--mono);margin-bottom:6px;">DURÉE JOURNALIÈRE DE RÉFÉRENCE</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <input type="number" id="setStdH" min="1" max="12" step="0.1" oninput="updateStdPreview()" value="7" style="width:90px;background:var(--surface);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:var(--mono);font-size:20px;padding:10px;text-align:center;">
+        <div>
+        <span style="color:var(--text-dim);font-family:var(--mono);">heures / jour</span>
+        <div id="stdPreview" style="font-size:11px;color:var(--accent);font-family:var(--mono);margin-top:4px;"></div>
+      </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:14px;">
+      <div style="font-size:10px;color:var(--text-dim);font-family:var(--mono);margin-bottom:6px;">JOUR DU BILAN HEBDOMADAIRE</div>
+      <select id="setBilanDay" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:var(--sans);font-size:14px;padding:10px;">
+        <option value="5">Vendredi</option>
+        <option value="6">Samedi</option>
+        <option value="0">Dimanche</option>
+        <option value="1">Lundi</option>
+      </select>
+    </div>
+
+    <button class="btn-save" onclick="saveSettings()">💾 Enregistrer les paramètres</button>
+  </div>
+
+  <!-- ══ GOOGLE DRIVE ══ -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#4285f4;">☁️ Google Drive</div>
+      <div id="driveStatusBadge" style="font-size:10px;font-family:var(--mono);color:var(--text-muted);">Non connecté</div>
+    </div>
+
+    <!-- Config Client ID -->
+    <div id="driveConfigZone">
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:10px;line-height:1.6;">
+        Pour synchroniser vos données avec Google Drive, entrez votre <strong style="color:var(--text)">Client ID OAuth</strong> Google Cloud.
+        <a href="#" onclick="showDriveHelp();return false;" style="color:#4285f4;text-decoration:none;display:block;margin-top:4px;">📖 Comment obtenir un Client ID ?</a>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:9px;color:var(--text-dim);font-family:var(--mono);margin-bottom:5px;">GOOGLE OAUTH CLIENT ID</div>
+        <input type="text" id="driveClientId" placeholder="xxxxxx.apps.googleusercontent.com"
+          style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:var(--mono);font-size:11px;padding:10px 12px;">
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:9px;color:var(--text-dim);font-family:var(--mono);margin-bottom:5px;">URL DE CETTE APPLICATION (origine autorisée)</div>
+        <div id="driveOriginDisplay" style="background:var(--surface);border:1px solid var(--border);border-radius:9px;color:var(--accent);font-family:var(--mono);font-size:11px;padding:10px 12px;word-break:break-all;"></div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="driveAutoSync" style="width:16px;height:16px;accent-color:var(--accent);">
+          <span style="font-size:12px;color:var(--text-dim);">Synchronisation automatique à chaque enregistrement</span>
+        </label>
+      </div>
+      <button onclick="initDriveAuthWithFeedback(this)" id="btnConnectDrive" style="width:100%;background:#4285f4;color:#fff;border:none;border-radius:11px;font-family:var(--sans);font-size:13px;font-weight:700;padding:13px;cursor:pointer;transition:opacity .2s;">
+        🔗 Connecter Google Drive
+      </button>
+    </div>
+
+    <!-- Zone connectée -->
+    <div id="driveConnectedZone" style="display:none;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;background:var(--surface);border-radius:10px;padding:10px;">
+        <div id="driveUserAvatar" style="width:32px;height:32px;border-radius:50%;background:#4285f4;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">👤</div>
+        <div>
+          <div id="driveUserName" style="font-size:13px;font-weight:700;color:var(--text);">—</div>
+          <div id="driveUserEmail" style="font-size:10px;color:var(--text-dim);font-family:var(--mono);">—</div>
+        </div>
+      </div>
+      <div id="driveSyncInfo" style="font-size:11px;color:var(--text-dim);font-family:var(--mono);margin-bottom:12px;"></div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button onclick="driveSaveNow()" style="background:var(--accent);border:none;border-radius:11px;color:#000;font-family:var(--sans);font-size:13px;font-weight:700;padding:13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+          <span>☁️ Sauvegarder maintenant</span><span id="driveSaveStatus"></span>
+        </button>
+        <button onclick="driveRestoreNow()" style="background:var(--card);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:var(--sans);font-size:13px;font-weight:700;padding:13px;cursor:pointer;">
+          ⬇️ Restaurer depuis Drive
+        </button>
+        <button onclick="driveDisconnect()" style="background:none;border:1px solid var(--border);border-radius:11px;color:var(--text-muted);font-family:var(--sans);font-size:12px;padding:10px;cursor:pointer;">
+          Déconnecter
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ EXPORTS ══ -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;">
+    <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;">📤 Export des données</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button onclick="exportCSV()" style="background:var(--card);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:var(--sans);font-size:13px;font-weight:700;padding:13px;cursor:pointer;text-align:left;">📊 Exporter en CSV <span style="color:var(--text-dim);font-weight:400">· Excel, Numbers…</span></button>
+      <button onclick="exportPDF()" style="background:var(--card);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:var(--sans);font-size:13px;font-weight:700;padding:13px;cursor:pointer;text-align:left;">📄 Rapport PDF graphiques <span style="color:var(--text-dim);font-weight:400">· stats + graphiques</span></button>
+    </div>
+  </div>
+
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;">
+    <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent2);margin-bottom:12px;">ℹ️ À propos</div>
+    <div style="font-size:11px;color:var(--text-dim);font-family:var(--mono);line-height:1.7;">
+      Chrono Travail v4.0<br>
+      679 entrées importées depuis Excel<br>
+      Données : 2023-01-02 → 2026-03-31<br>
+      Stockage local · Sync Google Drive optionnelle
+    </div>
+  </div>
+</div>
+
+
+<!-- HUMEURS GRAPHIQUES -->
+<div class="screen" id="screen-humeurs">
+  <div class="graph-section" style="margin-bottom:12px;">
+    <div class="graph-header">
+      <div class="graph-title">Humeurs dans le temps</div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <select id="humeurYearSel" class="year-select" onchange="renderHumeurGraphs()"></select>
+      </div>
+    </div>
+    <div id="humeurCalendar" style="margin-top:8px;"></div>
+  </div>
+  <div class="graph-section" style="margin-bottom:12px;">
+    <div class="graph-header"><div class="graph-title">Fréquence des humeurs</div></div>
+    <div id="humeurBars" style="display:flex;flex-direction:column;gap:7px;margin-top:4px;"></div>
+  </div>
+  <div class="graph-section">
+    <div class="graph-header"><div class="graph-title">Humeur vs heures travaillées</div></div>
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:10px;font-family:var(--mono);">Corrélation entre ressenti et durée de travail</div>
+    <div id="humeurCorrel" style="display:flex;flex-direction:column;gap:6px;"></div>
+  </div>
+</div>
+
+<!-- MODAL CONFLIT DRIVE -->
+<div class="modal-overlay" id="driveConflictModal" style="z-index:250;">
+  <div class="modal">
+    <div class="modal-title">⚠️ Conflit de données</div>
+    <div style="font-size:13px;color:var(--text-dim);margin-bottom:16px;line-height:1.6;" id="driveConflictInfo"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button onclick="resolveConflict('local')" style="background:var(--accent);border:none;border-radius:11px;color:#000;font-family:var(--sans);font-size:13px;font-weight:700;padding:13px;cursor:pointer;">
+        💾 Garder mes données locales → écraser Drive
+      </button>
+      <button onclick="resolveConflict('drive')" style="background:var(--card);border:1px solid var(--border);border-radius:11px;color:var(--text);font-family:var(--sans);font-size:13px;font-weight:700;padding:13px;cursor:pointer;">
+        ☁️ Restaurer depuis Drive → écraser local
+      </button>
+      <button onclick="resolveConflict('merge')" style="background:var(--card);border:1px solid #a78bfa50;border-radius:11px;color:var(--accent4);font-family:var(--sans);font-size:13px;font-weight:700;padding:13px;cursor:pointer;">
+        🔀 Fusionner (priorité Drive pour dates communes)
+      </button>
+      <button onclick="closeConflictModal()" style="background:none;border:1px solid var(--border);border-radius:11px;color:var(--text-muted);font-family:var(--sans);font-size:12px;padding:10px;cursor:pointer;">
+        Annuler
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AIDE DRIVE -->
+<div class="modal-overlay" id="driveHelpModal" style="z-index:250;">
+  <div class="modal" style="max-height:85dvh;overflow-y:auto;">
+    <div class="modal-title">📖 Configurer Google Drive</div>
+    <div style="font-size:12px;color:var(--text-dim);line-height:1.8;">
+      <div style="color:var(--accent);font-weight:700;margin-bottom:6px;">Étape 1 — Créer un projet Google Cloud</div>
+      <div style="margin-bottom:12px;">Allez sur <span style="color:var(--accent);font-family:var(--mono);">console.cloud.google.com</span> → Nouveau projet → donnez-lui un nom (ex: "Chrono Travail").</div>
+
+      <div style="color:var(--accent);font-weight:700;margin-bottom:6px;">Étape 2 — Activer Google Drive API</div>
+      <div style="margin-bottom:12px;">Menu → APIs et services → Bibliothèque → cherchez "Google Drive API" → Activer.</div>
+
+      <div style="color:var(--accent);font-weight:700;margin-bottom:6px;">Étape 3 — Écran de consentement OAuth</div>
+      <div style="margin-bottom:12px;">APIs et services → Écran de consentement OAuth → Externe → remplissez le nom de l'app → Enregistrer.</div>
+
+      <div style="color:var(--accent);font-weight:700;margin-bottom:6px;">Étape 4 — Créer les identifiants</div>
+      <div style="margin-bottom:12px;">APIs et services → Identifiants → Créer des identifiants → ID client OAuth → Application Web → ajoutez l'URL affichée dans "Origine autorisée" → Créer. Copiez le <strong style="color:var(--text)">Client ID</strong>.</div>
+
+      <div style="color:var(--accent);font-weight:700;margin-bottom:6px;">Étape 5 — Héberger l'application</div>
+      <div style="margin-bottom:12px;">Si vous ouvrez le fichier en local (<span style="font-family:var(--mono);color:var(--accent2)">file://</span>), Google refusera la connexion. Il faut héberger le fichier sur un serveur HTTPS. La solution gratuite la plus simple :<br><br>
+        1. Créez un compte sur <span style="color:var(--accent);font-family:var(--mono)">github.com</span><br>
+        2. Nouveau dépôt public → uploadez ce fichier HTML<br>
+        3. Settings → Pages → Source: main → Save<br>
+        4. Votre URL sera : <span style="font-family:var(--mono);color:var(--accent)">https://votrepseudo.github.io/votre-repo/suivi-temps.html</span><br>
+        5. Ajoutez cette URL comme "Origine autorisée" dans Google Cloud Console
+      </div>
+
+      <div style="color:var(--accent3);font-weight:700;margin-bottom:6px;">⚡ Durée totale estimée : ~15 minutes</div>
+    </div>
+    <button onclick="document.getElementById('driveHelpModal').classList.remove('open')" class="btn-save" style="margin-top:14px;">Fermer</button>
+  </div>
+</div>
+
+<!-- MODAL PÉRIODE -->
+<div class="modal-overlay" id="mOverlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-title">📅 Ajouter une période d'absence</div>
+    <div class="type-sel">
+      <div class="topt" id="to-conge" onclick="selType('conge')">🏖 Congé</div>
+      <div class="topt" id="to-ferie" onclick="selType('ferie')">🎉 Férié</div>
+      <div class="topt" id="to-rtt" onclick="selType('rtt')">🔄 RTT</div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-lbl">DATE DE DÉBUT</div>
+      <input type="date" class="modal-inp" id="mStart">
+    </div>
+    <div class="modal-row">
+      <div class="modal-lbl">DATE DE FIN</div>
+      <input type="date" class="modal-inp" id="mEnd">
+    </div>
+    <div class="modal-row">
+      <div class="modal-lbl">NOTE (optionnel)</div>
+      <input type="text" class="modal-inp" id="mNote" placeholder="Ex: Vacances d'été">
+    </div>
+    <div class="modal-btns">
+      <button class="btn-mc" onclick="closeModalD()">Annuler</button>
+      <button class="btn-mo" onclick="saveAbsPeriod()">✓ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SK='chrono_v2';
+const JN=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const JNL=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const MN=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+const MNL=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+let STD=7*60;
+const YCOLS=['#00d4aa','#ffd166','#a78bfa','#60a5fa','#fb7185','#34d399'];
+
+let cd=new Date(); cd.setHours(0,0,0,0);
+let gMode='heures', mType='conge';
+
+function gd(){try{return JSON.parse(localStorage.getItem(SK)||'{}')}catch(e){return{}}}
+function sd(d){localStorage.setItem(SK,JSON.stringify(d))}
+function dk(d){return d.toISOString().slice(0,10)}
+function wknd(d){const w=d.getDay();return w===0||w===6}
+function t2m(t){if(!t)return null;const[h,m]=t.split(':').map(Number);return h*60+m}
+function m2s(m){if(m===null||m===undefined||isNaN(m))return'—';const s=m<0?'-':'',a=Math.abs(m);return s+Math.floor(a/60)+'h'+String(a%60).padStart(2,'0')}
+function dur(s,e){if(!s||!e)return null;const a=t2m(s),b=t2m(e);return(a===null||b===null)?null:b-a}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+
+/* ── ABSENCE ── */
+function getAbs(){const d=gd();return d[dk(cd)]?.absence||null}
+function setAbsUI(type){
+  // Map type → button IDs
+  const allBtns=['bConge','bCongeM','bCongeAM','bFerie','bRtt','bRttM','bRttAM'];
+  const typeMap={
+    'conge':'bConge','conge-matin':'bCongeM','conge-am':'bCongeAM',
+    'ferie':'bFerie','rtt':'bRtt','rtt-matin':'bRttM','rtt-am':'bRttAM'
+  };
+  allBtns.forEach(id=>{const el=document.getElementById(id);if(el)el.className='btn-abs';});
+  if(type&&typeMap[type]){
+    const el=document.getElementById(typeMap[type]);
+    const base=type.startsWith('conge')?'conge':type.startsWith('rtt')?'rtt':'ferie';
+    if(el)el.className='btn-abs a-'+base;
+  }
+  const ban=document.getElementById('absBanner');
+  const cm=document.getElementById('cardMatin'),ca=document.getElementById('cardAM');
+  if(type){
+    const lbl={
+      'conge':'🏖 Journée congé','conge-matin':'🏖 Congé matin','conge-am':'🏖 Congé après-midi',
+      'ferie':'🎉 Jour férié',
+      'rtt':'🔄 RTT journée','rtt-matin':'🔄 RTT matin','rtt-am':'🔄 RTT après-midi'
+    };
+    const baseType=type.startsWith('conge')?'conge':type.startsWith('rtt')?'rtt':'ferie';
+    ban.className='absence-banner ab-'+baseType;
+    ban.innerHTML=`<div class="ab-label">${lbl[type]||type}</div><div class="ab-sub">${
+      type.endsWith('-matin')?'Après-midi normal':type.endsWith('-am')?'Matin normal':'Horaires non requis'
+    }</div>`;
+    ban.style.display='block';
+    if(type==='conge'||type==='rtt'||type==='ferie'){cm.classList.add('dimmed');ca.classList.add('dimmed');}
+    else if(type.endsWith('-matin')){cm.classList.add('dimmed');ca.classList.remove('dimmed');}
+    else if(type.endsWith('-am')){cm.classList.remove('dimmed');ca.classList.add('dimmed');}
+  }else{
+    ban.style.display='none';cm.classList.remove('dimmed');ca.classList.remove('dimmed');
+  }
+}
+function toggleAbs(type){
+  const d=gd();const k=dk(cd);if(!d[k])d[k]={};
+  d[k].absence=d[k].absence===type?undefined:type;
+  if(!d[k].absence)delete d[k].absence;
+  sd(d);setAbsUI(d[k]?.absence||null);updateCalcs();
+}
+
+/* ── CALCS ── */
+function updateCalcs(){
+  const dm=dur(document.getElementById('hdm').value,document.getElementById('hfm').value);
+  const dam=dur(document.getElementById('hdam').value,document.getElementById('hfam').value);
+  document.getElementById('durM').textContent=dm!==null?m2s(dm):'—';
+  document.getElementById('durAM').textContent=dam!==null?m2s(dam):'—';
+  const tot=(dm||0)+(dam||0);
+  const abs=getAbs();
+  if(abs){
+    const lbl={conge:'Congé',ferie:'Férié',rtt:'RTT'};
+    document.getElementById('totalJ').textContent=lbl[abs];
+    document.getElementById('diffJ').textContent='';
+  }else{
+    document.getElementById('totalJ').textContent=m2s(tot);
+    const diff=tot-STD,el=document.getElementById('diffJ');
+    if(tot>0){el.textContent=(diff>=0?'+':'')+m2s(diff)+' vs '+Math.round(STD/60)+'h ref';el.className='day-total-diff '+(diff>=0?'positive':'negative');}
+    else el.textContent='';
+  }
+}
+
+/* ── SAVE / LOAD ── */
+function saveEntry(){
+  const d=gd();const k=dk(cd);const prev=d[k]||{};
+  const tot=(dur(document.getElementById('hdm').value,document.getElementById('hfm').value)||0)+
+            (dur(document.getElementById('hdam').value,document.getElementById('hfam').value)||0);
+  d[k]={...prev,dm:document.getElementById('hdm').value,fm:document.getElementById('hfm').value,
+         dam:document.getElementById('hdam').value,fam:document.getElementById('hfam').value,total:tot};
+  sd(d);showToast('✓ Enregistré !');driveAutoSyncIfEnabled();
+}
+function loadEntry(){
+  const d=gd();const e=d[dk(cd)]||{};
+  document.getElementById('hdm').value=e.dm||'';
+  document.getElementById('hfm').value=e.fm||'';
+  document.getElementById('hdam').value=e.dam||'';
+  document.getElementById('hfam').value=e.fam||'';
+  setAbsUI(e.absence||null);updateCalcs();renderHumeur();
+}
+
+/* ── DATE NAV ── */
+function weekNum(d){
+  const dt=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  const dn=dt.getUTCDay()||7;dt.setUTCDate(dt.getUTCDate()+4-dn);
+  const ys=new Date(Date.UTC(dt.getUTCFullYear(),0,1));
+  return Math.ceil((((dt-ys)/86400000)+1)/7);
+}
+function updateDate(){
+  document.getElementById('displayDate').textContent=JNL[cd.getDay()]+' '+cd.getDate()+' '+MNL[cd.getMonth()];
+  document.getElementById('displayDateSub').textContent=cd.getFullYear()+' · semaine '+weekNum(cd);
+  const t=new Date();t.setHours(0,0,0,0);
+  document.getElementById('todayBadge').textContent=cd.getTime()===t.getTime()?"AUJOURD'HUI":dk(cd);
+}
+function changeDay(n){cd=new Date(cd.getTime()+n*86400000);updateDate();loadEntry();}
+function goToday(){cd=new Date();cd.setHours(0,0,0,0);updateDate();loadEntry();}
+function setNow(id){const n=new Date();document.getElementById(id).value=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');updateCalcs();}
+
+/* ── MODAL ── */
+function openModal(){
+  document.getElementById('mStart').value=dk(cd);
+  document.getElementById('mEnd').value=dk(cd);
+  document.getElementById('mNote').value='';
+  selType('conge');
+  document.getElementById('mOverlay').classList.add('open');
+}
+function closeModal(e){if(e.target===document.getElementById('mOverlay'))closeModalD();}
+function closeModalD(){document.getElementById('mOverlay').classList.remove('open');}
+function selType(t){
+  mType=t;
+  ['conge','ferie','rtt'].forEach(x=>{
+    document.getElementById('to-'+x).className='topt'+(t===x?' t'+x[0]:'');
+  });
+}
+function saveAbsPeriod(){
+  const s=document.getElementById('mStart').value,e=document.getElementById('mEnd').value,note=document.getElementById('mNote').value;
+  if(!s||!e){showToast('⚠ Dates requises');return;}
+  const d=gd();let cnt=0;
+  for(let dt=new Date(s+'T00:00:00');dt<=new Date(e+'T00:00:00');dt=new Date(dt.getTime()+86400000)){
+    if(!wknd(dt)){const k=dk(dt);if(!d[k])d[k]={};d[k].absence=mType;if(note)d[k].absNote=note;cnt++;}
+  }
+  sd(d);closeModalD();loadEntry();showToast(`✓ ${cnt} jour(s) enregistré(s)`);
+}
+
+/* ── CUMUL ── */
+function resetCumulFilter(){
+  document.getElementById('cumulFrom').value='';
+  document.getElementById('cumulTo').value='';
+  updateCumul();
+}
+function updateCumul(){
+  const d=gd(),now=new Date();
+  const sw=new Date(now);sw.setDate(now.getDate()-(now.getDay()===0?6:now.getDay()-1));sw.setHours(0,0,0,0);
+  const fromVal=document.getElementById('cumulFrom')?.value; // YYYY-MM
+  const toVal=document.getElementById('cumulTo')?.value;
+  const filterFrom=fromVal?new Date(fromVal+'-01T00:00:00'):null;
+  const filterTo=toVal?new Date(toVal+'-31T23:59:59'):null;
+  let wk=0,mo=0,tot=0,jours=0,nC=0,nR=0,nF=0,nCM=0,nRM=0,sumM=0;
+  const y=now.getFullYear(),m=now.getMonth();
+  Object.keys(d).filter(k=>!k.startsWith('bilan_')).forEach(k=>{
+    const dt=new Date(k+'T00:00:00'),e=d[k],t=e.total||0;
+    if(filterFrom&&dt<filterFrom)return;
+    if(filterTo&&dt>filterTo)return;
+    tot+=t;if(t>0){jours++;sumM+=t;}
+    const abs=e.absence||'';
+    if(abs==='conge'||abs==='conge-matin'||abs==='conge-am')nC++;
+    else if(abs==='rtt'||abs==='rtt-matin'||abs==='rtt-am')nR++;
+    else if(abs==='ferie')nF++;
+    if(abs.endsWith('-matin')||abs.endsWith('-am')){}
+    if(dt.getFullYear()===y&&dt.getMonth()===m)mo+=t;
+    if(dt>=sw&&dt<=now)wk+=t;
+  });
+  const solde=tot-(jours*STD);
+  const label=filterFrom||filterTo?'Période filtrée':'Ce mois';
+  document.getElementById('cSem').textContent=m2s(wk);
+  document.getElementById('cMois').textContent=m2s(filterFrom||filterTo?tot:mo);
+  document.querySelector('#screen-cumul .stat-card:nth-child(2) .stat-label').textContent=filterFrom||filterTo?'Sur la période':label;
+  document.getElementById('cTot').textContent=m2s(tot);
+  document.getElementById('cJours').textContent=jours+' jours travaillés';
+  document.getElementById('cMoy').textContent=jours>0?m2s(Math.round(sumM/jours)):'—';
+  const sel=document.getElementById('cSolde');
+  sel.textContent=(solde>=0?'+':'')+m2s(solde);
+  sel.className='stat-value '+(solde>=0?'accent':'danger');
+  document.getElementById('cSoldeSub').textContent=jours+' j × '+m2s(STD)+' référence';
+  document.getElementById('nConge').textContent=nC;
+  document.getElementById('nRtt').textContent=nR;
+  document.getElementById('nFerie').textContent=nF;
+  // Week bars
+  const wDays=[];
+  for(let i=0;i<7;i++){const dt=new Date(sw.getTime()+i*86400000);wDays.push({dt,e:d[dk(dt)]});}
+  const mx=Math.max(...wDays.map(x=>x.e?.total||0),STD);
+  document.getElementById('weekBars').innerHTML=wDays.map(({dt,e})=>{
+    const t=e?.total||0,abs=e?.absence;
+    const h=abs?Math.round(70*.6):t?Math.round((t/mx)*70):0;
+    const cls=abs?abs:t>=STD?'work':t>0?'ok':'';
+    const val=abs?({conge:'🏖',ferie:'🎉',rtt:'🔄'}[abs]):(t?m2s(t):'');
+    return `<div class="bw-col"><div class="bw-val">${val}</div><div class="bw ${cls}" style="height:${h}px"></div><div class="bw-lbl">${JN[dt.getDay()]}</div></div>`;
+  }).join('');
+}
+
+/* ── GRAPHIQUES ── */
+function getYears(){
+  const d=gd(),ys=new Set(Object.keys(d).map(k=>k.slice(0,4)));
+  ys.add(String(new Date().getFullYear()));
+  return[...ys].sort();
+}
+function fillYearSel(){
+  const sel=document.getElementById('yearSel');
+  const prev=sel.value; // préserver la valeur courante
+  const ys=getYears(),cur=new Date().getFullYear();
+  sel.innerHTML=ys.map(y=>`<option value="${y}"${y===(prev||String(cur))?' selected':''}>${y}</option>`).join('');
+}
+function setGMode(m,el){
+  gMode=m;
+  document.querySelectorAll('.gtab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderGraphs();
+}
+function getMonthStats(year){
+  const d=gd();const stats=[];
+  for(let m=0;m<12;m++){
+    let hours=0,jours=0,conge=0,rtt=0,ferie=0;
+    Object.keys(d).filter(k=>!k.startsWith('bilan_')).forEach(k=>{
+      const dt=new Date(k+'T00:00:00'),e=d[k];
+      if(dt.getFullYear()===year&&dt.getMonth()===m){
+        if(e.absence==='conge')conge++;
+        else if(e.absence==='rtt')rtt++;
+        else if(e.absence==='ferie')ferie++;
+        else if(e.total>0){hours+=e.total;jours++;}
+      }
+    });
+    stats.push({m,hours,jours,conge,rtt,ferie,solde:hours-(jours*STD)});
+  }
+  return stats;
+}
+function renderGraphs(){
+  fillYearSel();
+  const year=parseInt(document.getElementById('yearSel').value)||new Date().getFullYear();
+  renderMChart(year);
+  renderLC();
+  renderDonut();
+}
+function renderMChart(year){
+  const stats=getMonthStats(year);
+  const el=document.getElementById('mChart'),leg=document.getElementById('gLegend');
+  let vals,getCls,getTip,legend;
+  if(gMode==='heures'){
+    vals=stats.map(s=>s.hours);
+    getCls=s=>s.hours===0?'':'work';
+    getTip=s=>m2s(s.hours)+' · '+s.jours+'j';
+    legend=`<div class="leg-item"><div class="leg-dot" style="background:var(--accent)"></div>Heures travaillées</div>`;
+  }else if(gMode==='solde'){
+    vals=stats.map(s=>s.solde);
+    getCls=s=>s.solde>=0?'work':'low';
+    getTip=s=>(s.solde>=0?'+':'')+m2s(s.solde);
+    legend=`<div class="leg-item"><div class="leg-dot" style="background:var(--accent)"></div>Excédent</div><div class="leg-item"><div class="leg-dot" style="background:var(--accent2)"></div>Déficit</div>`;
+  }else{
+    vals=stats.map(s=>s.conge+s.rtt+s.ferie);
+    getCls=s=>s.conge>0?'conge-bar':s.rtt>0?'rtt-bar':s.ferie>0?'ferie-bar':'';
+    getTip=s=>`C:${s.conge} R:${s.rtt} F:${s.ferie}`;
+    legend=`<div class="leg-item"><div class="leg-dot" style="background:var(--conge)"></div>Congé</div><div class="leg-item"><div class="leg-dot" style="background:var(--rtt)"></div>RTT</div><div class="leg-item"><div class="leg-dot" style="background:var(--ferie)"></div>Férié</div>`;
+  }
+  leg.innerHTML=legend;
+  const mx=Math.max(...vals.map(Math.abs),1);
+  const H=100;
+  el.innerHTML=stats.map((s,i)=>{
+    const v=vals[i],h=Math.max(Math.round((Math.abs(v)/mx)*H),v!==0?3:0);
+    const cls=getCls(s);
+    let vStr='';
+    if(gMode==='heures'&&v>0)vStr=Math.floor(v/60)+'h';
+    else if(gMode==='solde'&&v!==0)vStr=(v>=0?'+':'-')+Math.floor(Math.abs(v)/60)+'h';
+    else if(gMode==='abs'&&v>0)vStr=v+'j';
+    return `<div class="bc-col">
+      <div class="bc-val">${vStr}</div>
+      <div class="bc-bar ${cls}" style="height:${h}px" data-tip="${getTip(s)}"></div>
+      <div class="bc-lbl">${MN[i]}</div>
+    </div>`;
+  }).join('');
+}
+function renderLC(){
+  const years=getYears().slice(-5);
+  const svg=document.getElementById('lcSvg'),leg=document.getElementById('lcLegend');
+  if(!years.length){svg.innerHTML='';return;}
+  const allStats=years.map(y=>getMonthStats(parseInt(y)));
+  const mx=Math.max(...allStats.flat().map(s=>s.hours),1);
+  const W=300,H=100,PX=8,PY=8;
+  let out='',legH='';
+  // ref line ~140h/mo
+  const ry=H-PY-((140*60)/mx)*(H-PY*2);
+  out+=`<line x1="${PX}" y1="${ry.toFixed(1)}" x2="${W-PX}" y2="${ry.toFixed(1)}" stroke="#1e2d42" stroke-width="1" stroke-dasharray="3,3"/>`;
+  years.forEach((y,yi)=>{
+    const col=YCOLS[yi%YCOLS.length];
+    const pts=allStats[yi].map((s,i)=>{
+      const x=PX+i*(W-PX*2)/11;
+      const yy=H-PY-(s.hours/mx)*(H-PY*2);
+      return[x,yy];
+    });
+    const path=pts.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+    out+=`<path d="${path}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" opacity=".9"/>`;
+    out+=pts.map(([x,yy],i)=>`<circle cx="${x.toFixed(1)}" cy="${yy.toFixed(1)}" r="2.5" fill="${col}" stroke="#0a0f18" stroke-width="1.5"><title>${y} ${MN[i]}: ${m2s(allStats[yi][i].hours)}</title></circle>`).join('');
+    legH+=`<div class="leg-item"><div class="leg-dot" style="background:${col}"></div>${y}</div>`;
+  });
+  MN.forEach((mo,i)=>{
+    const x=PX+i*(W-PX*2)/11;
+    out+=`<text x="${x.toFixed(1)}" y="${H+2}" text-anchor="middle" font-family="DM Mono,monospace" font-size="7" fill="#3a4d62">${mo}</text>`;
+  });
+  svg.innerHTML=out;
+  leg.innerHTML=legH;
+}
+function renderDonut(){
+  const d=gd();let wk=0,nC=0,nR=0,nF=0;
+  Object.keys(d).forEach(k=>{
+    const e=d[k];
+    if(e.absence==='conge')nC++;
+    else if(e.absence==='rtt')nR++;
+    else if(e.absence==='ferie')nF++;
+    else if(e.total>0)wk++;
+  });
+  const total=wk+nC+nR+nF;
+  const cv=document.getElementById('donut'),ctx=cv.getContext('2d');
+  cv.width=100;cv.height=100;ctx.clearRect(0,0,100,100);
+  const legEl=document.getElementById('donutLeg');
+  if(total===0){
+    ctx.strokeStyle='#1e2d42';ctx.lineWidth=20;ctx.beginPath();ctx.arc(50,50,32,0,Math.PI*2);ctx.stroke();
+    legEl.innerHTML='<div style="color:var(--text-muted);font-size:11px">Aucune donnée</div>';return;
+  }
+  const segs=[
+    {v:wk,c:'#00d4aa',l:'Travaillé'},
+    {v:nC,c:'#f97316',l:'Congé'},
+    {v:nR,c:'#c084fc',l:'RTT'},
+    {v:nF,c:'#60a5fa',l:'Férié'}
+  ].filter(s=>s.v>0);
+  let angle=-Math.PI/2;
+  segs.forEach(s=>{
+    const sl=(s.v/total)*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(50,50);ctx.arc(50,50,44,angle,angle+sl);ctx.closePath();
+    ctx.fillStyle=s.c;ctx.fill();angle+=sl;
+  });
+  ctx.beginPath();ctx.arc(50,50,28,0,Math.PI*2);ctx.fillStyle='#161f2e';ctx.fill();
+  ctx.fillStyle='#e8edf5';ctx.font='bold 13px "DM Mono",monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(total,50,48);ctx.font='8px "DM Mono",monospace';ctx.fillStyle='#6b7f96';ctx.fillText('jours',50,60);
+  legEl.innerHTML=segs.map(s=>`<div class="donut-legend-item">
+    <div class="donut-legend-dot" style="background:${s.c}"></div>
+    <div style="font-size:11px;color:var(--text-dim);flex:1">${s.l}</div>
+    <div style="font-family:var(--mono);font-size:12px;color:var(--text)">${s.v}j</div>
+  </div>`).join('');
+}
+
+/* ── HISTORIQUE ── */
+function resetHistFilter(){
+  document.getElementById('histFrom').value='';
+  document.getElementById('histTo').value='';
+  renderHistory();
+}
+function renderHistory(){
+  const d=gd();
+  const fromVal=document.getElementById('histFrom')?.value;
+  const toVal=document.getElementById('histTo')?.value;
+  const allKeys=Object.keys(d).filter(k=>!k.startsWith('bilan_')).sort((a,b)=>b.localeCompare(a));
+  const keys=allKeys.filter(k=>{
+    if(fromVal&&k.slice(0,7)<fromVal)return false;
+    if(toVal&&k.slice(0,7)>toVal)return false;
+    return true;
+  });
+  // Stats de la période
+  const statsEl=document.getElementById('histStats');
+  if(statsEl&&keys.length>0){
+    let tot=0,j=0;
+    keys.forEach(k=>{const e=d[k];if(e.total>0){tot+=e.total;j++;}});
+    const avg=j>0?Math.round(tot/j):0;
+    statsEl.innerHTML=`
+      <div style="text-align:center"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">Entrées</div><div style="font-family:var(--mono);font-size:16px;color:var(--text)">${keys.length}</div></div>
+      <div style="text-align:center"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">Total</div><div style="font-family:var(--mono);font-size:16px;color:var(--accent)">${m2s(tot)}</div></div>
+      <div style="text-align:center"><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase">Moy/j</div><div style="font-family:var(--mono);font-size:16px;color:var(--accent3)">${m2s(avg)}</div></div>
+    `;
+    statsEl.style.display='flex';
+  } else if(statsEl) { statsEl.style.display='none'; }
+  const el=document.getElementById('entryList');
+  if(!keys.length){el.innerHTML='<div class="empty-state">📭<br>Aucune entrée pour cette période</div>';return;}
+  el.innerHTML=keys.map(k=>{
+    const e=d[k],dt=new Date(k+'T00:00:00'),dow=dt.getDay();
+    const wk=wknd(dt),t=e.total||0,abs=e.absence;
+    let lcls='',vcls='',vtxt='—';
+    if(abs){lcls='el-'+abs;vcls='et-'+abs;vtxt={conge:'🏖 Congé',ferie:'🎉 Férié',rtt:'🔄 RTT'}[abs];}
+    else if(!wk){lcls=t>=STD?'el-good':'el-low';vcls=t>=STD?'et-good':'et-low';vtxt=t>0?m2s(t):'—';}
+    let tStr='';
+    if(e.dm&&e.fm)tStr+=`☀️ ${e.dm}–${e.fm}`;
+    if(e.dam&&e.fam)tStr+=(tStr?'<br>':'')+`🌤 ${e.dam}–${e.fam}`;
+    if(abs&&!tStr)tStr=`<span style="color:var(--text-muted)">${e.absNote||'Absence'}</span>`;
+    if(!tStr)tStr=`<span style="color:var(--text-muted)">—</span>`;
+    return `<div class="entry-item ${wk?'el-wknd':lcls}" onclick="goToDate('${k}')">
+      <div class="entry-date-col"><div class="entry-day-num">${dt.getDate()}</div><div class="entry-day-name">${JN[dow]}</div></div>
+      <div class="entry-sep"></div>
+      <div class="entry-times">${tStr}</div>
+      <div class="entry-total ${vcls}">${vtxt}</div>
+      <button class="btn-del" onclick="delEntry(event,'${k}')">✕</button>
+    </div>`;
+  }).join('');
+}
+function goToDate(k){
+  cd=new Date(k+'T00:00:00');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelector('.tab[onclick*="saisie"]').classList.add('active');
+  document.getElementById('screen-saisie').classList.add('active');
+  updateDate();loadEntry();
+}
+function delEntry(evt,k){evt.stopPropagation();const d=gd();delete d[k];sd(d);renderHistory();showToast('🗑 Supprimé');}
+
+/* ── SCREEN NAV ── */
+function showScreen(name,el){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  el.classList.add('active');
+  if(name==='cumul')updateCumul();
+  if(name==='graphiques')renderGraphs();
+  if(name==='historique')renderHistory();
+  if(name==='bilan')showBilan();
+  if(name==='humeurs')renderHumeurGraphs();
+  if(name==='parametres')loadSettings();
+}
+
+/* ── TOAST ── */
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+
+/* ── IMPORT DONNÉES ── */
+function importExcelData() {
+  const existing = gd();
+  const xl = {"2023-01-02": {"dm": "08:10", "fm": "12:35", "dam": "13:35", "fam": "18:15", "total": 545}, "2023-01-03": {"dm": "08:00", "fm": "12:35", "dam": "13:15", "fam": "17:00", "total": 500}, "2023-01-04": {"dm": "08:15", "fm": "13:10", "dam": "13:45", "fam": "17:35", "total": 525}, "2023-01-05": {"dm": "08:05", "fm": "12:40", "dam": "13:40", "fam": "17:55", "total": 530}, "2023-01-06": {"dm": "08:00", "fm": "12:00", "dam": "13:30", "fam": "17:05", "total": 455}, "2023-01-09": {"dm": "08:20", "fm": "12:35", "dam": "13:20", "fam": "17:40", "total": 515}, "2023-01-10": {"dm": "08:25", "fm": "12:30", "dam": "13:15", "fam": "18:00", "total": 530}, "2023-01-11": {"dm": "07:45", "fm": "12:30", "dam": "13:30", "fam": "17:35", "total": 530}, "2023-01-12": {"dm": "08:35", "fm": "12:20", "dam": "13:45", "fam": "17:25", "total": 445}, "2023-01-13": {"dm": "08:00", "fm": "12:45", "dam": "13:45", "fam": "17:25", "total": 505}, "2023-01-16": {"dm": "08:15", "fm": "12:45", "dam": "13:30", "fam": "17:35", "total": 515}, "2023-01-17": {"dm": "07:45", "fm": "13:05", "dam": "13:25", "fam": "17:15", "total": 550}, "2023-01-18": {"dm": "", "fm": "", "dam": "13:20", "fam": "17:35", "total": 255}, "2023-01-19": {"dm": "08:30", "fm": "12:40", "dam": "13:15", "fam": "18:05", "total": 540}, "2023-01-20": {"dm": "08:20", "fm": "12:05", "dam": "13:25", "fam": "18:15", "total": 515}, "2023-01-23": {"dm": "08:00", "fm": "12:45", "dam": "13:20", "fam": "19:20", "total": 645}, "2023-01-24": {"dm": "08:45", "fm": "12:45", "dam": "13:45", "fam": "16:45", "total": 420}, "2023-01-25": {"dm": "07:45", "fm": "13:30", "dam": "13:45", "fam": "18:40", "total": 640}, "2023-01-26": {"dm": "07:30", "fm": "12:55", "dam": "13:40", "fam": "17:55", "total": 580}, "2023-01-27": {"dm": "06:20", "fm": "12:30", "dam": "13:25", "fam": "19:25", "total": 730}, "2023-01-29": {"dm": "", "fm": "", "dam": "14:30", "fam": "16:30", "total": 120}, "2023-01-30": {"dm": "07:55", "fm": "12:45", "dam": "13:30", "fam": "19:55", "total": 675}, "2023-01-31": {"dm": "07:35", "fm": "12:30", "dam": "13:20", "fam": "18:10", "total": 585}, "2023-02-01": {"dm": "07:20", "fm": "12:05", "dam": "13:20", "fam": "18:00", "total": 565}, "2023-02-02": {"dm": "08:30", "fm": "12:50", "dam": "13:35", "fam": "18:05", "total": 530}, "2023-02-03": {"dm": "08:30", "fm": "12:15", "dam": "13:35", "fam": "16:35", "total": 405}, "2023-02-06": {"dm": "08:45", "fm": "13:10", "dam": "13:55", "fam": "18:05", "total": 515}, "2023-02-07": {"dm": "08:05", "fm": "12:55", "dam": "13:35", "fam": "16:35", "total": 470}, "2023-02-08": {"dm": "07:25", "fm": "13:00", "dam": "13:45", "fam": "18:20", "total": 610}, "2023-02-09": {"dm": "08:20", "fm": "13:00", "dam": "13:50", "fam": "18:40", "total": 570}, "2023-02-10": {"dm": "08:00", "fm": "12:45", "dam": "13:20", "fam": "17:55", "total": 560}, "2023-02-20": {"dm": "08:15", "fm": "12:45", "dam": "13:10", "fam": "19:30", "total": 650}, "2023-02-21": {"dm": "08:20", "fm": "12:50", "dam": "13:50", "fam": "17:30", "total": 490}, "2023-02-22": {"dm": "08:25", "fm": "12:40", "dam": "13:40", "fam": "17:55", "total": 510}, "2023-02-23": {"dm": "08:25", "fm": "13:10", "dam": "13:40", "fam": "19:10", "total": 615}, "2023-02-24": {"dm": "08:30", "fm": "12:15", "dam": "13:40", "fam": "17:00", "total": 425}, "2023-02-27": {"dm": "08:15", "fm": "12:45", "dam": "13:15", "fam": "16:45", "total": 480}, "2023-02-28": {"dm": "08:05", "fm": "12:40", "dam": "13:15", "fam": "17:20", "total": 520}, "2023-03-01": {"dm": "08:00", "fm": "12:45", "dam": "13:30", "fam": "17:05", "total": 500}, "2023-03-02": {"dm": "08:10", "fm": "12:30", "dam": "13:15", "fam": "18:05", "total": 550}, "2023-03-03": {"dm": "08:15", "fm": "12:10", "dam": "13:30", "fam": "17:45", "total": 490}, "2023-03-06": {"dm": "08:20", "fm": "12:45", "dam": "13:25", "fam": "18:15", "total": 555}, "2023-03-07": {"dm": "07:55", "fm": "12:50", "dam": "13:35", "fam": "17:45", "total": 545}, "2023-03-08": {"dm": "08:55", "fm": "11:55", "dam": "13:30", "fam": "18:10", "total": 460}, "2023-03-09": {"dm": "08:15", "fm": "13:10", "dam": "13:45", "fam": "17:25", "total": 515}, "2023-03-10": {"dm": "08:20", "fm": "12:20", "dam": "13:20", "fam": "17:20", "total": 480}, "2023-03-13": {"dm": "08:20", "fm": "12:45", "dam": "13:20", "fam": "17:20", "total": 505}, "2023-03-14": {"dm": "08:10", "fm": "12:25", "dam": "14:00", "fam": "16:30", "total": 405}, "2023-03-15": {"dm": "08:00", "fm": "12:40", "dam": "13:40", "fam": "18:20", "total": 560}, "2023-03-16": {"dm": "08:10", "fm": "13:00", "dam": "13:30", "fam": "17:35", "total": 535}, "2023-03-17": {"dm": "07:05", "fm": "12:20", "dam": "13:00", "fam": "16:35", "total": 530}, "2023-03-20": {"dm": "08:00", "fm": "12:45", "dam": "13:30", "fam": "17:35", "total": 530}, "2023-03-21": {"dm": "07:50", "fm": "12:45", "dam": "13:15", "fam": "17:15", "total": 535}, "2023-03-22": {"dm": "07:55", "fm": "12:45", "dam": "13:35", "fam": "17:05", "total": 500}, "2023-03-23": {"dm": "07:50", "fm": "12:50", "dam": "13:45", "fam": "17:20", "total": 515}, "2023-03-24": {"dm": "07:15", "fm": "11:30", "dam": "13:50", "fam": "17:20", "total": 465}, "2023-03-27": {"dm": "08:25", "fm": "12:15", "dam": "13:20", "fam": "17:50", "total": 500}, "2023-03-28": {"dm": "07:55", "fm": "12:50", "dam": "13:45", "fam": "17:30", "total": 520}, "2023-03-29": {"dm": "07:45", "fm": "13:00", "dam": "13:30", "fam": "17:55", "total": 580}, "2023-03-30": {"dm": "08:00", "fm": "12:45", "dam": "13:20", "fam": "18:15", "total": 580}, "2023-03-31": {"dm": "08:30", "fm": "12:10", "dam": "13:55", "fam": "16:55", "total": 400}, "2023-04-03": {"dm": "08:25", "fm": "13:05", "dam": "13:35", "fam": "17:50", "total": 535}, "2023-04-04": {"dm": "08:05", "fm": "12:35", "dam": "13:20", "fam": "17:35", "total": 525}, "2023-04-05": {"dm": "08:30", "fm": "12:45", "dam": "13:30", "fam": "18:35", "total": 560}, "2023-04-06": {"dm": "07:00", "fm": "12:20", "dam": "12:20", "fam": "19:40", "total": 760}, "2023-04-07": {"dm": "08:30", "fm": "11:55", "dam": "13:00", "fam": "17:15", "total": 460}, "2023-04-11": {"dm": "08:40", "fm": "12:35", "dam": "13:10", "fam": "17:40", "total": 505}, "2023-04-12": {"dm": "07:45", "fm": "13:05", "dam": "13:35", "fam": "17:55", "total": 580}, "2023-04-13": {"dm": "07:55", "fm": "12:40", "dam": "13:20", "fam": "18:45", "total": 610}, "2023-04-14": {"dm": "08:55", "fm": "13:00", "dam": "13:35", "fam": "16:45", "total": 435}, "2023-04-24": {"dm": "08:15", "fm": "12:20", "dam": "12:55", "fam": "17:30", "total": 520}, "2023-04-25": {"dm": "08:45", "fm": "13:15", "dam": "13:45", "fam": "17:55", "total": 520}, "2023-04-26": {"dm": "08:00", "fm": "12:25", "dam": "13:50", "fam": "17:40", "total": 495}, "2023-04-27": {"dm": "08:45", "fm": "12:10", "dam": "13:40", "fam": "17:50", "total": 455}, "2023-04-28": {"dm": "08:30", "fm": "12:50", "dam": "13:20", "fam": "17:40", "total": 520}, "2023-05-02": {"dm": "08:15", "fm": "12:55", "dam": "13:25", "fam": "18:15", "total": 570}, "2023-05-03": {"dm": "08:55", "fm": "12:50", "dam": "13:20", "fam": "18:00", "total": 515}, "2023-05-04": {"dm": "08:15", "fm": "12:30", "dam": "13:10", "fam": "17:30", "total": 515}, "2023-05-05": {"dm": "09:45", "fm": "12:30", "dam": "13:30", "fam": "17:20", "total": 395}, "2023-05-09": {"dm": "08:10", "fm": "12:05", "dam": "13:10", "fam": "17:30", "total": 495}, "2023-05-10": {"dm": "07:50", "fm": "13:05", "dam": "13:50", "fam": "17:00", "total": 505}, "2023-05-11": {"dm": "08:10", "fm": "13:15", "dam": "13:40", "fam": "17:15", "total": 520}, "2023-05-12": {"dm": "07:20", "fm": "12:00", "dam": "13:30", "fam": "17:10", "total": 500}, "2023-05-15": {"dm": "08:30", "fm": "12:30", "dam": "13:00", "fam": "18:40", "total": 580}, "2023-05-16": {"dm": "08:05", "fm": "13:00", "dam": "13:30", "fam": "18:30", "total": 595}, "2023-05-17": {"dm": "08:30", "fm": "12:25", "dam": "13:25", "fam": "18:30", "total": 540}, "2023-05-19": {"dm": "07:20", "fm": "12:45", "dam": "14:10", "fam": "18:10", "total": 565}, "2023-05-22": {"dm": "08:20", "fm": "13:00", "dam": "13:30", "fam": "18:50", "total": 600}, "2023-05-23": {"dm": "08:15", "fm": "13:30", "dam": "13:50", "fam": "18:35", "total": 600}, "2023-05-24": {"dm": "08:05", "fm": "13:00", "dam": "13:40", "fam": "18:15", "total": 570}, "2023-05-25": {"dm": "07:50", "fm": "12:30", "dam": "13:40", "fam": "18:00", "total": 540}, "2023-05-26": {"dm": "07:15", "fm": "12:10", "dam": "13:10", "fam": "17:55", "total": 580}, "2023-05-30": {"dm": "08:20", "fm": "12:45", "dam": "13:30", "fam": "18:20", "total": 555}, "2023-05-31": {"dm": "08:20", "fm": "13:45", "dam": "14:00", "fam": "18:15", "total": 580}, "2023-06-01": {"dm": "08:15", "fm": "12:40", "dam": "14:00", "fam": "17:50", "total": 495}, "2023-06-02": {"dm": "08:00", "fm": "12:20", "dam": "13:20", "fam": "17:20", "total": 500}, "2023-06-05": {"dm": "07:45", "fm": "12:45", "dam": "13:30", "fam": "17:40", "total": 550}, "2023-06-06": {"dm": "08:15", "fm": "13:00", "dam": "13:30", "fam": "18:15", "total": 570}, "2023-06-07": {"dm": "08:15", "fm": "13:00", "dam": "13:30", "fam": "18:00", "total": 555}, "2023-06-08": {"dm": "08:05", "fm": "12:45", "dam": "13:20", "fam": "18:05", "total": 565}, "2023-06-09": {"dm": "06:40", "fm": "12:15", "dam": "13:35", "fam": "17:30", "total": 570}, "2023-06-12": {"dm": "08:30", "fm": "12:35", "dam": "13:30", "fam": "18:15", "total": 530}, "2023-06-13": {"dm": "08:00", "fm": "12:50", "dam": "13:20", "fam": "17:40", "total": 550}, "2023-06-14": {"dm": "08:00", "fm": "13:20", "dam": "13:50", "fam": "17:50", "total": 560}, "2023-06-15": {"dm": "08:20", "fm": "12:45", "dam": "13:15", "fam": "18:05", "total": 555}, "2023-06-16": {"dm": "08:20", "fm": "12:25", "dam": "13:20", "fam": "18:25", "total": 550}, "2023-06-19": {"dm": "08:10", "fm": "12:40", "dam": "13:30", "fam": "17:45", "total": 525}, "2023-06-20": {"dm": "07:50", "fm": "12:35", "dam": "13:20", "fam": "17:25", "total": 530}, "2023-06-21": {"dm": "08:40", "fm": "12:45", "dam": "13:15", "fam": "18:05", "total": 535}, "2023-06-22": {"dm": "08:35", "fm": "12:50", "dam": "13:35", "fam": "18:20", "total": 540}, "2023-06-23": {"dm": "08:35", "fm": "12:30", "dam": "13:15", "fam": "17:50", "total": 510}, "2023-06-26": {"dm": "07:50", "fm": "12:20", "dam": "13:25", "fam": "18:20", "total": 565}, "2023-06-27": {"dm": "08:10", "fm": "13:05", "dam": "13:25", "fam": "18:40", "total": 610}, "2023-06-28": {"dm": "08:00", "fm": "12:10", "dam": "13:45", "fam": "17:55", "total": 500}, "2023-06-29": {"dm": "08:05", "fm": "13:00", "dam": "13:35", "fam": "18:00", "total": 560}, "2023-06-30": {"dm": "08:15", "fm": "13:05", "dam": "13:35", "fam": "17:45", "total": 540}, "2023-07-03": {"dm": "08:15", "fm": "13:15", "dam": "13:45", "fam": "18:20", "total": 575}, "2023-07-04": {"dm": "08:15", "fm": "12:15", "dam": "13:00", "fam": "17:30", "total": 510}, "2023-07-05": {"dm": "08:15", "fm": "13:30", "dam": "14:10", "fam": "17:10", "total": 495}, "2023-07-06": {"dm": "07:50", "fm": "11:50", "dam": "13:30", "fam": "17:05", "total": 455}, "2023-07-07": {"dm": "08:05", "fm": "12:30", "dam": "13:30", "fam": "17:30", "total": 505}, "2023-07-10": {"dm": "08:15", "fm": "13:00", "dam": "13:45", "fam": "17:40", "total": 520}, "2023-07-11": {"dm": "08:15", "fm": "12:45", "dam": "13:25", "fam": "17:00", "total": 485}, "2023-08-07": {"dm": "08:30", "fm": "12:50", "dam": "13:35", "fam": "17:15", "total": 480}, "2023-08-08": {"dm": "08:35", "fm": "12:30", "dam": "13:10", "fam": "17:15", "total": 480}, "2023-08-09": {"dm": "08:35", "fm": "12:15", "dam": "13:15", "fam": "17:20", "total": 465}, "2023-08-10": {"dm": "08:30", "fm": "12:35", "dam": "13:20", "fam": "17:20", "total": 485}, "2023-08-11": {"dm": "08:30", "fm": "12:30", "dam": "13:00", "fam": "17:15", "total": 495}, "2023-08-14": {"dm": "07:55", "fm": "12:00", "dam": "13:20", "fam": "16:40", "total": 445}, "2023-08-16": {"dm": "08:20", "fm": "12:40", "dam": "13:15", "fam": "17:15", "total": 500}, "2023-08-17": {"dm": "08:10", "fm": "12:45", "dam": "13:25", "fam": "17:10", "total": 500}, "2023-08-18": {"dm": "08:10", "fm": "12:30", "dam": "13:20", "fam": "16:30", "total": 450}, "2023-08-21": {"dm": "08:05", "fm": "12:55", "dam": "13:15", "fam": "16:55", "total": 510}, "2023-08-22": {"dm": "08:20", "fm": "12:20", "dam": "12:50", "fam": "17:05", "total": 495}, "2023-08-23": {"dm": "08:15", "fm": "12:55", "dam": "13:25", "fam": "17:25", "total": 520}, "2023-08-24": {"dm": "08:20", "fm": "12:35", "dam": "13:05", "fam": "17:20", "total": 510}, "2023-08-25": {"dm": "08:05", "fm": "10:05", "dam": "13:30", "fam": "17:00", "total": 330}, "2023-08-28": {"dm": "08:15", "fm": "13:00", "dam": "13:45", "fam": "18:25", "total": 565}, "2023-08-29": {"dm": "08:20", "fm": "12:25", "dam": "13:15", "fam": "17:45", "total": 515}, "2023-08-30": {"dm": "08:20", "fm": "13:00", "dam": "13:30", "fam": "17:15", "total": 505}, "2023-08-31": {"dm": "08:05", "fm": "13:00", "dam": "13:40", "fam": "17:00", "total": 495}, "2023-09-01": {"dm": "08:10", "fm": "12:20", "dam": "13:10", "fam": "16:45", "total": 465}, "2023-09-04": {"dm": "08:20", "fm": "11:55", "dam": "13:55", "fam": "17:35", "total": 435}, "2023-09-05": {"dm": "07:50", "fm": "13:00", "dam": "13:40", "fam": "17:45", "total": 555}, "2023-09-14": {"dm": "08:20", "fm": "12:45", "dam": "13:25", "fam": "18:10", "total": 550}, "2023-09-15": {"dm": "08:25", "fm": "12:55", "dam": "13:45", "fam": "17:25", "total": 490}, "2023-09-18": {"dm": "08:30", "fm": "12:30", "dam": "13:30", "fam": "17:30", "total": 480}, "2023-09-19": {"dm": "08:00", "fm": "12:30", "dam": "13:30", "fam": "17:45", "total": 525}, "2023-09-20": {"dm": "08:10", "fm": "13:00", "dam": "14:00", "fam": "18:25", "total": 555}, "2023-09-21": {"dm": "09:30", "fm": "12:45", "dam": "12:45", "fam": "17:00", "total": 450}, "2023-09-22": {"dm": "09:00", "fm": "12:15", "dam": "14:00", "fam": "17:00", "total": 375}, "2023-09-25": {"dm": "08:25", "fm": "12:50", "dam": "13:20", "fam": "19:00", "total": 605}, "2023-09-26": {"dm": "07:55", "fm": "12:50", "dam": "13:25", "fam": "18:10", "total": 580}, "2023-09-27": {"dm": "07:50", "fm": "13:05", "dam": "13:35", "fam": "17:55", "total": 575}, "2023-09-28": {"dm": "08:05", "fm": "13:10", "dam": "13:30", "fam": "18:35", "total": 610}, "2023-09-29": {"dm": "08:00", "fm": "12:10", "dam": "12:40", "fam": "17:00", "total": 510}, "2023-10-02": {"dm": "08:30", "fm": "13:00", "dam": "13:40", "fam": "17:30", "total": 500}, "2023-10-03": {"dm": "07:55", "fm": "12:50", "dam": "13:10", "fam": "18:10", "total": 595}, "2023-10-04": {"dm": "08:10", "fm": "12:45", "dam": "13:45", "fam": "17:35", "total": 505}, "2023-10-05": {"dm": "08:00", "fm": "12:15", "dam": "13:20", "fam": "17:40", "total": 515}, "2023-10-06": {"dm": "08:30", "fm": "12:30", "dam": "", "fam": "", "total": 240}, "2023-10-09": {"dm": "08:00", "fm": "12:20", "dam": "13:30", "fam": "17:50", "total": 520}, "2023-10-10": {"dm": "08:15", "fm": "12:45", "dam": "13:45", "fam": "17:50", "total": 515}, "2023-10-11": {"dm": "08:00", "fm": "13:00", "dam": "13:45", "fam": "16:45", "total": 480}, "2023-10-12": {"dm": "06:50", "fm": "12:30", "dam": "14:00", "fam": "18:50", "total": 630}, "2023-10-13": {"dm": "08:15", "fm": "12:30", "dam": "13:30", "fam": "17:45", "total": 510}, "2023-10-16": {"dm": "08:30", "fm": "12:40", "dam": "13:40", "fam": "17:35", "total": 485}, "2023-10-17": {"dm": "08:20", "fm": "12:55", "dam": "13:25", "fam": "18:20", "total": 570}, "2023-10-18": {"dm": "07:50", "fm": "12:50", "dam": "13:35", "fam": "18:50", "total": 615}, "2023-10-19": {"dm": "08:00", "fm": "12:00", "dam": "14:00", "fam": "18:00", "total": 480}, "2023-10-20": {"dm": "08:00", "fm": "12:00", "dam": "14:00", "fam": "18:00", "total": 480}, "2023-10-30": {"dm": "07:10", "fm": "12:40", "dam": "13:25", "fam": "18:05", "total": 610}, "2023-10-31": {"dm": "08:05", "fm": "12:55", "dam": "13:40", "fam": "18:00", "total": 550}, "2023-11-02": {"dm": "08:00", "fm": "12:25", "dam": "13:25", "fam": "17:20", "total": 500}, "2023-11-03": {"dm": "08:00", "fm": "12:15", "dam": "13:15", "fam": "17:15", "total": 495}, "2023-11-06": {"dm": "08:30", "fm": "12:25", "dam": "13:20", "fam": "17:35", "total": 490}, "2023-11-07": {"dm": "08:20", "fm": "12:45", "dam": "13:15", "fam": "17:10", "total": 500}, "2023-11-09": {"dm": "08:30", "fm": "12:55", "dam": "13:25", "fam": "17:45", "total": 525}, "2023-11-10": {"dm": "08:10", "fm": "12:15", "dam": "13:15", "fam": "18:30", "total": 560}, "2023-11-13": {"dm": "08:30", "fm": "12:40", "dam": "13:15", "fam": "18:20", "total": 555}, "2023-11-14": {"dm": "08:30", "fm": "13:00", "dam": "13:30", "fam": "17:35", "total": 515}, "2023-11-15": {"dm": "08:20", "fm": "13:20", "dam": "13:45", "fam": "18:25", "total": 580}, "2023-11-16": {"dm": "08:15", "fm": "12:50", "dam": "13:35", "fam": "17:40", "total": 520}, "2023-11-17": {"dm": "07:20", "fm": "12:20", "dam": "13:10", "fam": "17:35", "total": 565}, "2023-11-20": {"dm": "08:10", "fm": "12:40", "dam": "13:20", "fam": "18:05", "total": 555}, "2023-11-21": {"dm": "08:50", "fm": "13:10", "dam": "13:30", "fam": "18:50", "total": 580}, "2023-11-22": {"dm": "08:00", "fm": "12:40", "dam": "13:05", "fam": "17:35", "total": 550}, "2023-11-23": {"dm": "07:55", "fm": "13:05", "dam": "13:25", "fam": "17:05", "total": 530}, "2023-11-24": {"dm": "08:15", "fm": "12:20", "dam": "13:30", "fam": "17:30", "total": 485}, "2023-11-27": {"dm": "08:35", "fm": "12:45", "dam": "13:40", "fam": "17:55", "total": 505}, "2023-11-28": {"dm": "08:15", "fm": "12:30", "dam": "13:15", "fam": "18:40", "total": 580}, "2023-11-30": {"dm": "08:20", "fm": "12:20", "dam": "13:00", "fam": "17:30", "total": 510}, "2023-12-01": {"dm": "08:15", "fm": "12:40", "dam": "14:05", "fam": "17:05", "total": 445}, "2023-12-04": {"dm": "09:00", "fm": "12:25", "dam": "13:40", "fam": "17:30", "total": 435}, "2023-12-05": {"dm": "08:30", "fm": "12:25", "dam": "13:35", "fam": "17:35", "total": 475}, "2023-12-06": {"dm": "08:20", "fm": "12:00", "dam": "13:30", "fam": "18:30", "total": 520}, "2023-12-07": {"dm": "08:25", "fm": "12:10", "dam": "12:30", "fam": "17:40", "total": 535}, "2023-12-08": {"dm": "08:30", "fm": "13:00", "dam": "13:25", "fam": "17:05", "total": 490}, "2023-12-11": {"dm": "08:30", "fm": "12:00", "dam": "13:45", "fam": "17:50", "total": 455}, "2023-12-12": {"dm": "07:50", "fm": "12:20", "dam": "14:15", "fam": "17:00", "total": 435}, "2023-12-14": {"dm": "08:20", "fm": "12:40", "dam": "14:00", "fam": "16:30", "total": 410}, "2023-12-15": {"dm": "08:15", "fm": "13:10", "dam": "13:30", "fam": "17:30", "total": 535}, "2023-12-18": {"dm": "08:25", "fm": "13:05", "dam": "13:25", "fam": "18:25", "total": 580}, "2023-12-19": {"dm": "08:10", "fm": "12:30", "dam": "13:05", "fam": "18:05", "total": 560}, "2023-12-20": {"dm": "08:40", "fm": "12:30", "dam": "13:05", "fam": "17:35", "total": 500}, "2023-12-21": {"dm": "08:00", "fm": "12:20", "dam": "13:35", "fam": "17:40", "total": 505}, "2023-12-22": {"dm": "08:00", "fm": "11:55", "dam": "14:00", "fam": "17:35", "total": 450}, "2024-01-02": {"dm": "08:05", "fm": "12:45", "dam": "13:45", "fam": "17:35", "total": 510}, "2024-01-03": {"dm": "07:40", "fm": "12:55", "dam": "13:40", "fam": "17:10", "total": 525}, "2024-01-04": {"dm": "08:05", "fm": "12:40", "dam": "13:30", "fam": "18:25", "total": 570}, "2024-01-05": {"dm": "08:00", "fm": "12:20", "dam": "12:50", "fam": "17:55", "total": 565}, "2024-01-08": {"dm": "08:30", "fm": "13:00", "dam": "13:45", "fam": "17:10", "total": 475}, "2024-01-09": {"dm": "08:30", "fm": "12:50", "dam": "13:30", "fam": "18:15", "total": 545}, "2024-01-10": {"dm": "07:30", "fm": "12:40", "dam": "13:45", "fam": "17:40", "total": 545}, "2024-01-11": {"dm": "08:50", "fm": "12:45", "dam": "13:30", "fam": "18:15", "total": 520}, "2024-01-12": {"dm": "08:30", "fm": "12:45", "dam": "14:00", "fam": "17:30", "total": 465}, "2024-01-15": {"dm": "08:15", "fm": "12:40", "dam": "13:30", "fam": "18:20", "total": 555}, "2024-01-16": {"dm": "08:25", "fm": "12:40", "dam": "13:30", "fam": "17:40", "total": 505}, "2024-01-17": {"dm": "08:25", "fm": "13:10", "dam": "13:40", "fam": "17:45", "total": 530}, "2024-01-18": {"dm": "08:45", "fm": "12:00", "dam": "13:25", "fam": "17:05", "total": 415}, "2024-01-19": {"dm": "07:40", "fm": "12:00", "dam": "13:20", "fam": "17:15", "total": 495}, "2024-01-22": {"dm": "08:10", "fm": "13:00", "dam": "13:45", "fam": "17:40", "total": 525}, "2024-01-23": {"dm": "08:05", "fm": "12:45", "dam": "13:30", "fam": "18:10", "total": 560}, "2024-01-24": {"dm": "07:15", "fm": "12:45", "dam": "13:50", "fam": "18:55", "total": 635}, "2024-01-25": {"dm": "07:45", "fm": "12:50", "dam": "13:30", "fam": "18:15", "total": 590}, "2024-01-26": {"dm": "08:20", "fm": "12:50", "dam": "13:10", "fam": "16:35", "total": 475}, "2024-01-29": {"dm": "08:00", "fm": "12:25", "dam": "13:15", "fam": "19:00", "total": 610}, "2024-01-30": {"dm": "07:45", "fm": "12:50", "dam": "13:30", "fam": "18:30", "total": 605}, "2024-01-31": {"dm": "08:25", "fm": "13:05", "dam": "13:35", "fam": "17:30", "total": 515}, "2024-02-01": {"dm": "08:15", "fm": "12:30", "dam": "13:10", "fam": "17:20", "total": 505}, "2024-02-02": {"dm": "08:00", "fm": "12:15", "dam": "13:30", "fam": "17:15", "total": 480}, "2024-02-05": {"dm": "08:25", "fm": "12:45", "dam": "13:20", "fam": "17:00", "total": 480}, "2024-02-06": {"dm": "08:05", "fm": "12:40", "dam": "13:30", "fam": "18:40", "total": 585}, "2024-02-07": {"dm": "08:25", "fm": "13:05", "dam": "13:40", "fam": "17:00", "total": 480}, "2024-02-08": {"dm": "08:25", "fm": "12:50", "dam": "14:05", "fam": "18:05", "total": 505}, "2024-02-09": {"dm": "07:20", "fm": "12:05", "dam": "13:15", "fam": "17:10", "total": 520}, "2024-02-12": {"dm": "07:50", "fm": "12:15", "dam": "12:45", "fam": "18:30", "total": 610}, "2024-02-13": {"dm": "08:35", "fm": "12:35", "dam": "13:20", "fam": "18:30", "total": 550}, "2024-02-14": {"dm": "08:10", "fm": "13:25", "dam": "13:55", "fam": "17:15", "total": 515}, "2024-02-15": {"dm": "09:00", "fm": "13:00", "dam": "14:00", "fam": "18:30", "total": 510}, "2024-02-16": {"dm": "08:00", "fm": "12:05", "dam": "13:10", "fam": "17:25", "total": 500}, "2024-02-19": {"dm": "07:45", "fm": "13:20", "dam": "13:40", "fam": "18:45", "total": 640}, "2024-02-20": {"dm": "08:05", "fm": "12:20", "dam": "13:45", "fam": "18:30", "total": 540}, "2024-02-21": {"dm": "07:30", "fm": "12:15", "dam": "13:40", "fam": "18:30", "total": 575}, "2024-02-22": {"dm": "08:10", "fm": "13:10", "dam": "13:40", "fam": "17:30", "total": 530}, "2024-02-23": {"dm": "08:00", "fm": "12:30", "dam": "13:15", "fam": "17:20", "total": 515}, "2024-03-04": {"dm": "08:15", "fm": "12:45", "dam": "13:30", "fam": "17:50", "total": 530}, "2024-03-05": {"dm": "08:15", "fm": "12:30", "dam": "13:20", "fam": "18:20", "total": 555}, "2024-03-06": {"dm": "08:15", "fm": "12:45", "dam": "14:00", "fam": "16:45", "total": 435}, "2024-03-07": {"dm": "08:00", "fm": "12:25", "dam": "14:00", "fam": "17:30", "total": 475}, "2024-03-08": {"dm": "08:00", "fm": "12:30", "dam": "14:10", "fam": "17:10", "total": 450}, "2024-03-11": {"dm": "08:30", "fm": "12:30", "dam": "13:15", "fam": "18:00", "total": 525}, "2024-03-12": {"dm": "08:30", "fm": "12:15", "dam": "13:30", "fam": "17:50", "total": 485}, "2024-03-13": {"dm": "07:30", "fm": "12:15", "dam": "13:45", "fam": "18:50", "total": 590}, "2024-03-14": {"dm": "08:25", "fm": "12:55", "dam": "13:40", "fam": "17:45", "total": 515}, "2024-03-15": {"dm": "08:00", "fm": "11:50", "dam": "13:20", "fam": "17:35", "total": 485}, "2024-03-18": {"dm": "08:40", "fm": "12:00", "dam": "13:30", "fam": "18:20", "total": 490}, "2024-03-19": {"dm": "08:30", "fm": "11:45", "dam": "13:10", "fam": "17:45", "total": 470}, "2024-03-20": {"dm": "08:15", "fm": "13:10", "dam": "13:40", "fam": "17:50", "total": 545}, "2024-03-21": {"dm": "06:55", "fm": "12:30", "dam": "14:00", "fam": "19:20", "total": 655}, "2024-03-22": {"dm": "07:45", "fm": "12:30", "dam": "14:00", "fam": "17:10", "total": 475}, "2024-03-25": {"dm": "07:55", "fm": "12:35", "dam": "13:10", "fam": "17:15", "total": 525}, "2024-03-26": {"dm": "07:55", "fm": "12:25", "dam": "12:50", "fam": "17:25", "total": 545}, "2024-03-27": {"dm": "08:20", "fm": "13:15", "dam": "13:45", "fam": "17:20", "total": 510}, "2024-03-28": {"dm": "08:10", "fm": "12:45", "dam": "13:30", "fam": "17:40", "total": 525}, "2024-03-29": {"dm": "08:00", "fm": "12:20", "dam": "13:00", "fam": "16:50", "total": 490}, "2024-04-02": {"dm": "08:40", "fm": "12:40", "dam": "13:20", "fam": "17:45", "total": 505}, "2024-04-03": {"dm": "08:05", "fm": "13:10", "dam": "13:55", "fam": "17:55", "total": 545}, "2024-04-04": {"dm": "08:05", "fm": "12:30", "dam": "13:15", "fam": "17:25", "total": 515}, "2024-04-05": {"dm": "08:00", "fm": "12:20", "dam": "13:40", "fam": "18:05", "total": 525}, "2024-04-08": {"dm": "07:55", "fm": "12:35", "dam": "13:25", "fam": "17:35", "total": 530}, "2024-04-09": {"dm": "07:55", "fm": "12:20", "dam": "13:20", "fam": "17:40", "total": 525}, "2024-04-10": {"dm": "07:10", "fm": "12:20", "dam": "13:45", "fam": "17:15", "total": 520}, "2024-04-11": {"dm": "08:20", "fm": "12:35", "dam": "13:30", "fam": "17:50", "total": 515}, "2024-04-12": {"dm": "08:00", "fm": "12:05", "dam": "13:45", "fam": "17:25", "total": 465}, "2024-04-15": {"dm": "08:20", "fm": "12:40", "dam": "13:30", "fam": "17:30", "total": 500}, "2024-04-16": {"dm": "08:00", "fm": "12:45", "dam": "13:45", "fam": "17:20", "total": 500}, "2024-04-17": {"dm": "08:10", "fm": "13:10", "dam": "13:50", "fam": "18:30", "total": 580}, "2024-04-18": {"dm": "08:15", "fm": "12:40", "dam": "13:30", "fam": "17:50", "total": 525}, "2024-04-19": {"dm": "08:10", "fm": "12:25", "dam": "13:00", "fam": "17:50", "total": 545}, "2024-04-29": {"dm": "08:15", "fm": "12:25", "dam": "13:10", "fam": "17:40", "total": 520}, "2024-04-30": {"dm": "08:15", "fm": "12:45", "dam": "13:15", "fam": "17:55", "total": 550}, "2024-05-02": {"dm": "08:00", "fm": "12:20", "dam": "13:20", "fam": "17:45", "total": 525}, "2024-05-03": {"dm": "08:10", "fm": "13:20", "dam": "13:45", "fam": "17:50", "total": 555}, "2024-05-06": {"dm": "08:15", "fm": "13:10", "dam": "13:40", "fam": "17:40", "total": 535}, "2024-05-07": {"dm": "08:10", "fm": "12:25", "dam": "13:10", "fam": "17:05", "total": 490}, "2024-05-15": {"dm": "08:15", "fm": "12:50", "dam": "13:30", "fam": "18:40", "total": 585}, "2024-05-16": {"dm": "07:45", "fm": "12:45", "dam": "13:30", "fam": "17:00", "total": 510}, "2024-05-17": {"dm": "08:00", "fm": "12:00", "dam": "13:20", "fam": "17:00", "total": 460}, "2024-05-21": {"dm": "08:00", "fm": "12:45", "dam": "13:30", "fam": "18:05", "total": 560}, "2024-05-22": {"dm": "08:00", "fm": "13:00", "dam": "13:45", "fam": "17:50", "total": 545}, "2024-05-23": {"dm": "08:05", "fm": "12:55", "dam": "13:40", "fam": "17:35", "total": 525}, "2024-05-24": {"dm": "07:00", "fm": "10:00", "dam": "12:45", "fam": "16:35", "total": 410}, "2024-05-27": {"dm": "08:40", "fm": "13:05", "dam": "13:35", "fam": "18:10", "total": 540}, "2024-05-28": {"dm": "08:10", "fm": "12:35", "dam": "13:40", "fam": "18:00", "total": 525}, "2024-05-29": {"dm": "08:10", "fm": "13:00", "dam": "13:30", "fam": "17:35", "total": 535}, "2024-05-30": {"dm": "08:05", "fm": "12:45", "dam": "13:30", "fam": "18:00", "total": 550}, "2024-05-31": {"dm": "08:00", "fm": "12:00", "dam": "13:30", "fam": "16:55", "total": 445}, "2024-06-03": {"dm": "08:30", "fm": "12:55", "dam": "13:45", "fam": "17:45", "total": 505}, "2024-06-04": {"dm": "07:45", "fm": "12:30", "dam": "13:15", "fam": "18:20", "total": 590}, "2024-06-06": {"dm": "08:25", "fm": "12:45", "dam": "13:25", "fam": "17:15", "total": 490}, "2024-06-07": {"dm": "07:55", "fm": "13:00", "dam": "13:50", "fam": "17:50", "total": 545}, "2024-06-10": {"dm": "08:15", "fm": "12:45", "dam": "13:30", "fam": "17:10", "total": 490}, "2024-06-11": {"dm": "08:15", "fm": "12:45", "dam": "13:30", "fam": "17:55", "total": 535}, "2024-06-12": {"dm": "08:20", "fm": "12:35", "dam": "13:05", "fam": "18:00", "total": 550}, "2024-06-13": {"dm": "08:35", "fm": "13:15", "dam": "14:15", "fam": "18:10", "total": 515}, "2024-06-14": {"dm": "08:00", "fm": "12:15", "dam": "13:30", "fam": "17:15", "total": 480}, "2024-06-17": {"dm": "08:10", "fm": "13:00", "dam": "13:30", "fam": "17:45", "total": 545}, "2024-06-18": {"dm": "08:40", "fm": "12:30", "dam": "13:30", "fam": "17:00", "total": 440}, "2024-06-19": {"dm": "08:20", "fm": "12:45", "dam": "13:50", "fam": "17:25", "total": 480}, "2024-06-20": {"dm": "09:00", "fm": "12:30", "dam": "13:45", "fam": "17:50", "total": 455}, "2024-06-21": {"dm": "07:40", "fm": "12:30", "dam": "14:15", "fam": "17:45", "total": 500}, "2024-06-24": {"dm": "08:20", "fm": "13:00", "dam": "13:30", "fam": "18:30", "total": 580}, "2024-06-25": {"dm": "08:15", "fm": "12:30", "dam": "14:00", "fam": "18:30", "total": 525}, "2024-06-26": {"dm": "08:45", "fm": "12:30", "dam": "14:00", "fam": "17:50", "total": 455}, "2024-06-27": {"dm": "08:00", "fm": "12:55", "dam": "13:35", "fam": "17:55", "total": 555}, "2024-06-28": {"dm": "07:20", "fm": "12:30", "dam": "13:15", "fam": "17:55", "total": 590}, "2024-07-01": {"dm": "07:50", "fm": "13:00", "dam": "14:00", "fam": "17:25", "total": 515}, "2024-07-02": {"dm": "08:15", "fm": "12:30", "dam": "13:15", "fam": "17:15", "total": 495}, "2024-07-03": {"dm": "08:10", "fm": "12:45", "dam": "13:20", "fam": "17:05", "total": 500}, "2024-07-04": {"dm": "08:00", "fm": "12:10", "dam": "13:30", "fam": "19:05", "total": 585}, "2024-07-05": {"dm": "08:10", "fm": "12:05", "dam": "13:50", "fam": "16:45", "total": 410}, "2024-07-08": {"dm": "08:15", "fm": "13:00", "dam": "13:45", "fam": "17:55", "total": 535}, "2024-07-09": {"dm": "08:00", "fm": "13:00", "dam": "13:30", "fam": "16:30", "total": 480}, "2024-08-05": {"dm": "08:05", "fm": "12:45", "dam": "13:30", "fam": "17:05", "total": 495}, "2024-08-06": {"dm": "08:05", "fm": "12:30", "dam": "13:30", "fam": "17:15", "total": 490}, "2024-08-07": {"dm": "08:05", "fm": "12:50", "dam": "13:50", "fam": "17:40", "total": 515}, "2024-08-08": {"dm": "08:00", "fm": "12:20", "dam": "13:45", "fam": "17:30", "total": 485}, "2024-08-09": {"dm": "09:00", "fm": "12:30", "dam": "13:30", "fam": "18:00", "total": 480}, "2024-08-12": {"dm": "08:15", "fm": "12:15", "dam": "13:15", "fam": "18:10", "total": 535}, "2024-08-13": {"dm": "08:15", "fm": "12:45", "dam": "13:25", "fam": "17:10", "total": 495}, "2024-08-14": {"dm": "07:15", "fm": "12:40", "dam": "14:00", "fam": "17:45", "total": 550}, "2024-08-16": {"dm": "08:20", "fm": "12:30", "dam": "14:15", "fam": "17:15", "total": 430}, "2024-08-19": {"dm": "08:20", "fm": "12:30", "dam": "13:10", "fam": "17:10", "total": 490}, "2024-08-20": {"dm": "08:15", "fm": "12:45", "dam": "13:45", "fam": "18:00", "total": 525}, "2024-08-21": {"dm": "08:15", "fm": "12:15", "dam": "12:40", "fam": "16:30", "total": 470}, "2024-08-22": {"dm": "08:35", "fm": "12:20", "dam": "13:20", "fam": "17:30", "total": 475}, "2024-08-23": {"dm": "08:30", "fm": "12:20", "dam": "13:35", "fam": "17:40", "total": 475}, "2024-08-26": {"dm": "08:05", "fm": "12:45", "dam": "13:25", "fam": "17:45", "total": 540}, "2024-08-27": {"dm": "08:15", "fm": "12:25", "dam": "13:05", "fam": "17:40", "total": 525}, "2024-08-28": {"dm": "07:50", "fm": "13:05", "dam": "13:35", "fam": "18:15", "total": 595}, "2024-08-29": {"dm": "08:00", "fm": "12:40", "dam": "13:20", "fam": "17:50", "total": 550}, "2024-08-30": {"dm": "08:00", "fm": "11:45", "dam": "13:50", "fam": "17:30", "total": 445}, "2024-09-02": {"dm": "08:10", "fm": "12:05", "dam": "13:15", "fam": "17:50", "total": 510}, "2024-09-03": {"dm": "08:25", "fm": "12:35", "dam": "13:20", "fam": "17:55", "total": 525}, "2024-09-04": {"dm": "07:55", "fm": "12:55", "dam": "13:55", "fam": "18:05", "total": 550}, "2024-09-05": {"dm": "08:00", "fm": "12:45", "dam": "13:30", "fam": "18:15", "total": 570}, "2024-09-06": {"dm": "08:00", "fm": "12:20", "dam": "13:05", "fam": "17:40", "total": 535}, "2024-09-09": {"dm": "07:55", "fm": "12:45", "dam": "13:20", "fam": "17:40", "total": 550}, "2024-09-10": {"dm": "07:45", "fm": "12:15", "dam": "13:30", "fam": "18:50", "total": 590}, "2024-09-11": {"dm": "07:45", "fm": "12:45", "dam": "13:45", "fam": "17:15", "total": 510}, "2024-09-12": {"dm": "08:10", "fm": "12:45", "dam": "13:30", "fam": "18:15", "total": 560}, "2024-09-13": {"dm": "09:00", "fm": "12:15", "dam": "13:30", "fam": "16:45", "total": 390}, "2024-09-16": {"dm": "08:10", "fm": "12:45", "dam": "13:30", "fam": "18:15", "total": 560}, "2024-09-17": {"dm": "07:55", "fm": "12:55", "dam": "13:20", "fam": "17:20", "total": 540}, "2024-09-18": {"dm": "07:45", "fm": "13:10", "dam": "13:40", "fam": "19:10", "total": 655}, "2024-09-19": {"dm": "07:00", "fm": "12:45", "dam": "13:30", "fam": "17:00", "total": 555}, "2024-09-20": {"dm": "08:20", "fm": "12:15", "dam": "13:50", "fam": "18:10", "total": 495}, "2024-09-23": {"dm": "07:45", "fm": "12:30", "dam": "12:55", "fam": "17:45", "total": 575}, "2024-09-24": {"dm": "07:50", "fm": "13:05", "dam": "13:35", "fam": "17:20", "total": 540}, "2024-09-25": {"dm": "08:10", "fm": "13:10", "dam": "13:35", "fam": "19:10", "total": 635}, "2024-09-27": {"dm": "08:15", "fm": "11:45", "dam": "14:00", "fam": "17:30", "total": 420}, "2024-09-30": {"dm": "08:00", "fm": "12:25", "dam": "13:25", "fam": "18:10", "total": 550}, "2024-10-01": {"dm": "07:55", "fm": "12:40", "dam": "13:30", "fam": "17:30", "total": 525}, "2024-10-02": {"dm": "08:15", "fm": "13:00", "dam": "13:45", "fam": "17:40", "total": 520}, "2024-10-03": {"dm": "08:00", "fm": "12:00", "dam": "13:00", "fam": "16:48", "total": 468}, "2024-10-04": {"dm": "08:00", "fm": "12:00", "dam": "13:00", "fam": "16:48", "total": 468}, "2024-10-07": {"dm": "07:40", "fm": "13:00", "dam": "13:30", "fam": "19:00", "total": 650}, "2024-10-08": {"dm": "07:50", "fm": "12:15", "dam": "13:15", "fam": "18:45", "total": 595}, "2024-10-09": {"dm": "08:20", "fm": "12:20", "dam": "13:55", "fam": "17:05", "total": 430}, "2024-10-10": {"dm": "08:20", "fm": "12:50", "dam": "13:25", "fam": "18:15", "total": 560}, "2024-10-11": {"dm": "08:25", "fm": "12:15", "dam": "13:25", "fam": "18:20", "total": 525}, "2024-10-14": {"dm": "07:40", "fm": "12:40", "dam": "13:20", "fam": "18:15", "total": 595}, "2024-10-15": {"dm": "08:30", "fm": "12:30", "dam": "12:30", "fam": "18:00", "total": 570}, "2024-10-17": {"dm": "08:30", "fm": "12:40", "dam": "13:30", "fam": "17:30", "total": 490}, "2024-10-18": {"dm": "08:10", "fm": "12:30", "dam": "13:15", "fam": "18:35", "total": 580}, "2024-10-28": {"dm": "08:20", "fm": "12:30", "dam": "13:20", "fam": "16:50", "total": 460}, "2024-10-29": {"dm": "08:05", "fm": "12:40", "dam": "13:40", "fam": "18:05", "total": 540}, "2024-10-30": {"dm": "07:50", "fm": "12:45", "dam": "13:45", "fam": "17:30", "total": 520}, "2024-10-31": {"dm": "08:00", "fm": "12:30", "dam": "13:30", "fam": "17:30", "total": 510}, "2024-11-04": {"dm": "08:10", "fm": "12:45", "dam": "13:25", "fam": "17:55", "total": 545}, "2024-11-05": {"dm": "08:00", "fm": "12:30", "dam": "13:10", "fam": "17:20", "total": 520}, "2024-11-06": {"dm": "08:15", "fm": "13:00", "dam": "13:30", "fam": "17:55", "total": 550}, "2024-11-07": {"dm": "08:15", "fm": "12:30", "dam": "13:15", "fam": "16:40", "total": 460}, "2024-11-08": {"dm": "08:45", "fm": "12:00", "dam": "13:45", "fam": "17:05", "total": 395}, "2024-11-12": {"dm": "08:15", "fm": "12:45", "dam": "13:30", "fam": "17:50", "total": 530}, "2024-11-13": {"dm": "08:35", "fm": "12:30", "dam": "13:30", "fam": "17:35", "total": 480}, "2024-11-14": {"dm": "08:25", "fm": "12:30", "dam": "13:15", "fam": "17:50", "total": 520}, "2024-11-15": {"dm": "07:15", "fm": "12:10", "dam": "14:15", "fam": "18:50", "total": 570}, "2024-11-16": {"dm": "07:50", "fm": "11:10", "dam": "", "fam": "", "total": 200}, "2024-11-18": {"dm": "07:50", "fm": "12:45", "dam": "13:30", "fam": "18:45", "total": 610}, "2024-11-19": {"dm": "07:30", "fm": "12:30", "dam": "14:00", "fam": "19:30", "total": 630}, "2024-11-20": {"dm": "08:25", "fm": "13:15", "dam": "13:30", "fam": "19:30", "total": 650}, "2024-11-21": {"dm": "07:30", "fm": "12:40", "dam": "13:50", "fam": "19:05", "total": 625}, "2024-11-22": {"dm": "08:05", "fm": "12:05", "dam": "13:40", "fam": "18:10", "total": 510}, "2024-11-25": {"dm": "08:00", "fm": "12:40", "dam": "13:30", "fam": "17:20", "total": 510}, "2024-11-26": {"dm": "07:50", "fm": "12:35", "dam": "14:00", "fam": "17:45", "total": 510}, "2024-11-27": {"dm": "07:50", "fm": "12:40", "dam": "13:40", "fam": "18:55", "total": 605}, "2024-11-28": {"dm": "08:00", "fm": "12:15", "dam": "13:30", "fam": "17:55", "total": 520}, "2024-11-29": {"dm": "07:50", "fm": "12:15", "dam": "12:40", "fam": "17:15", "total": 540}, "2024-12-02": {"dm": "08:05", "fm": "12:30", "dam": "13:20", "fam": "17:30", "total": 515}, "2024-12-03": {"dm": "07:00", "fm": "12:25", "dam": "13:50", "fam": "19:00", "total": 635}, "2024-12-04": {"dm": "08:25", "fm": "13:15", "dam": "14:00", "fam": "18:20", "total": 550}, "2024-12-05": {"dm": "08:15", "fm": "12:00", "dam": "13:00", "fam": "17:45", "total": 510}, "2024-12-06": {"dm": "08:00", "fm": "12:15", "dam": "12:45", "fam": "18:45", "total": 615}, "2024-12-09": {"dm": "07:50", "fm": "12:50", "dam": "13:25", "fam": "19:35", "total": 670}, "2024-12-10": {"dm": "08:10", "fm": "12:30", "dam": "13:30", "fam": "18:20", "total": 550}, "2024-12-11": {"dm": "07:30", "fm": "13:00", "dam": "13:30", "fam": "17:40", "total": 580}, "2024-12-12": {"dm": "08:10", "fm": "11:50", "dam": "12:10", "fam": "19:00", "total": 630}, "2024-12-16": {"dm": "07:30", "fm": "13:00", "dam": "13:20", "fam": "16:40", "total": 530}, "2024-12-17": {"dm": "08:30", "fm": "12:00", "dam": "14:00", "fam": "18:10", "total": 460}, "2024-12-19": {"dm": "07:55", "fm": "12:35", "dam": "13:30", "fam": "17:35", "total": 525}, "2024-12-20": {"dm": "07:50", "fm": "12:35", "dam": "13:40", "fam": "17:00", "total": 485}, "2024-12-30": {"dm": "08:10", "fm": "12:30", "dam": "13:10", "fam": "16:45", "total": 475}, "2024-12-31": {"dm": "08:00", "fm": "12:10", "dam": "13:35", "fam": "16:45", "total": 440}, "2025-01-02": {"dm": "08:00", "fm": "12:15", "dam": "13:30", "fam": "18:25", "total": 550}, "2025-01-06": {"dm": "08:25", "fm": "12:30", "dam": "13:45", "fam": "18:10", "total": 510}, "2025-01-07": {"dm": "08:00", "fm": "12:45", "dam": "13:30", "fam": "16:00", "total": 435}, "2025-01-08": {"dm": "08:40", "fm": "12:35", "dam": "13:15", "fam": "17:35", "total": 495}, "2025-01-09": {"dm": "07:55", "fm": "12:40", "dam": "13:30", "fam": "18:00", "total": 555}, "2025-01-10": {"dm": "08:30", "fm": "12:30", "dam": "13:30", "fam": "18:00", "total": 510}, "2025-01-13": {"dm": "08:30", "fm": "13:00", "dam": "13:35", "fam": "17:15", "total": 490}, "2025-01-14": {"dm": "08:10", "fm": "12:15", "dam": "13:50", "fam": "18:10", "total": 505}, "2025-01-15": {"dm": "08:25", "fm": "13:15", "dam": "13:50", "fam": "17:50", "total": 530}, "2025-01-16": {"dm": "08:30", "fm": "12:35", "dam": "13:25", "fam": "18:10", "total": 530}, "2025-01-17": {"dm": "08:00", "fm": "12:15", "dam": "13:35", "fam": "18:45", "total": 565}, "2025-01-20": {"dm": "08:10", "fm": "13:10", "dam": "13:40", "fam": "17:55", "total": 555}, "2025-01-21": {"dm": "07:45", "fm": "12:30", "dam": "13:30", "fam": "17:45", "total": 540}, "2025-01-22": {"dm": "08:20", "fm": "13:00", "dam": "13:45", "fam": "18:25", "total": 560}, "2025-01-23": {"dm": "08:45", "fm": "12:45", "dam": "13:45", "fam": "17:15", "total": 450}, "2025-01-24": {"dm": "07:25", "fm": "12:45", "dam": "13:45", "fam": "18:05", "total": 580}, "2025-01-27": {"dm": "07:55", "fm": "12:30", "dam": "13:00", "fam": "18:35", "total": 610}, "2025-01-28": {"dm": "07:30", "fm": "12:45", "dam": "13:30", "fam": "17:00", "total": 525}, "2025-01-30": {"dm": "08:00", "fm": "12:30", "dam": "13:30", "fam": "17:50", "total": 530}, "2025-01-31": {"dm": "08:15", "fm": "12:05", "dam": "13:30", "fam": "17:45", "total": 485}, "2025-02-03": {"dm": "07:55", "fm": "12:30", "dam": "13:30", "fam": "18:15", "total": 560}, "2025-02-04": {"dm": "08:05", "fm": "12:15", "dam": "13:00", "fam": "18:00", "total": 550}, "2025-02-05": {"dm": "07:50", "fm": "12:20", "dam": "13:05", "fam": "17:20", "total": 525}, "2025-02-06": {"dm": "07:50", "fm": "12:45", "dam": "13:20", "fam": "17:15", "total": 530}, "2025-02-07": {"dm": "07:50", "fm": "12:20", "dam": "13:35", "fam": "17:25", "total": 500}, "2025-02-10": {"dm": "08:30", "fm": "12:45", "dam": "13:15", "fam": "19:00", "total": 600}, "2025-02-11": {"dm": "08:15", "fm": "12:30", "dam": "13:55", "fam": "17:45", "total": 485}, "2025-02-12": {"dm": "08:30", "fm": "13:40", "dam": "14:00", "fam": "19:05", "total": 615}, "2025-02-13": {"dm": "07:45", "fm": "12:45", "dam": "13:45", "fam": "19:30", "total": 645}, "2025-02-14": {"dm": "08:30", "fm": "12:30", "dam": "13:00", "fam": "17:25", "total": 505}, "2025-02-17": {"dm": "08:00", "fm": "13:15", "dam": "13:35", "fam": "19:30", "total": 670}, "2025-02-18": {"dm": "07:45", "fm": "12:45", "dam": "13:25", "fam": "18:40", "total": 615}, "2025-02-19": {"dm": "07:55", "fm": "12:30", "dam": "13:30", "fam": "17:30", "total": 515}, "2025-02-20": {"dm": "07:55", "fm": "12:50", "dam": "13:20", "fam": "17:10", "total": 525}, "2025-02-21": {"dm": "08:00", "fm": "12:25", "dam": "13:40", "fam": "17:10", "total": 475}, "2025-02-24": {"dm": "08:20", "fm": "12:20", "dam": "13:00", "fam": "17:05", "total": 485}, "2025-02-25": {"dm": "08:25", "fm": "12:35", "dam": "13:15", "fam": "17:30", "total": 505}, "2025-02-26": {"dm": "08:45", "fm": "12:15", "dam": "13:30", "fam": "18:05", "total": 485}, "2025-02-27": {"dm": "08:25", "fm": "12:45", "dam": "13:45", "fam": "18:45", "total": 560}, "2025-02-28": {"dm": "08:10", "fm": "12:30", "dam": "13:00", "fam": "17:50", "total": 550}, "2025-03-10": {"dm": "08:00", "fm": "13:00", "dam": "13:30", "fam": "19:00", "total": 630}, "2025-03-11": {"dm": "08:30", "fm": "12:35", "dam": "13:20", "fam": "17:30", "total": 495}, "2025-03-12": {"dm": "08:30", "fm": "12:50", "dam": "13:20", "fam": "19:20", "total": 620}, "2025-03-13": {"dm": "09:00", "fm": "11:45", "dam": "13:30", "fam": "16:45", "total": 360}, "2025-03-14": {"dm": "08:20", "fm": "12:10", "dam": "13:30", "fam": "17:45", "total": 485}, "2025-03-17": {"dm": "07:30", "fm": "12:45", "dam": "14:00", "fam": "17:45", "total": 540}, "2025-03-18": {"dm": "08:50", "fm": "12:05", "dam": "13:05", "fam": "16:35", "total": 405}, "2025-03-19": {"dm": "08:25", "fm": "12:35", "dam": "13:15", "fam": "17:50", "total": 525}, "2025-03-20": {"dm": "08:20", "fm": "12:45", "dam": "13:15", "fam": "17:20", "total": 510}, "2025-03-21": {"dm": "07:20", "fm": "12:20", "dam": "13:15", "fam": "17:50", "total": 575}, "2025-03-24": {"dm": "07:00", "fm": "12:10", "dam": "13:10", "fam": "18:30", "total": 630}, "2025-03-25": {"dm": "08:00", "fm": "13:10", "dam": "13:50", "fam": "18:05", "total": 565}, "2025-03-26": {"dm": "08:25", "fm": "12:45", "dam": "13:10", "fam": "18:55", "total": 605}, "2025-03-27": {"dm": "08:30", "fm": "12:30", "dam": "14:00", "fam": "18:00", "total": 480}, "2025-03-28": {"dm": "07:55", "fm": "12:30", "dam": "13:25", "fam": "17:20", "total": 510}, "2025-03-31": {"dm": "07:50", "fm": "12:45", "dam": "13:20", "fam": "16:55", "total": 510}, "2025-04-01": {"dm": "08:25", "fm": "12:20", "dam": "14:00", "fam": "18:15", "total": 490}, "2025-04-02": {"dm": "07:45", "fm": "12:40", "dam": "13:40", "fam": "18:00", "total": 555}, "2025-04-03": {"dm": "08:00", "fm": "12:25", "dam": "13:20", "fam": "18:50", "total": 595}, "2025-04-04": {"dm": "08:30", "fm": "12:20", "dam": "13:40", "fam": "17:10", "total": 440}, "2025-04-07": {"dm": "08:00", "fm": "12:20", "dam": "13:25", "fam": "19:45", "total": 640}, "2025-04-08": {"dm": "08:30", "fm": "12:35", "dam": "13:25", "fam": "17:45", "total": 505}, "2025-04-10": {"dm": "07:30", "fm": "12:30", "dam": "14:00", "fam": "18:25", "total": 565}, "2025-04-11": {"dm": "08:15", "fm": "12:30", "dam": "13:30", "fam": "16:30", "total": 435}, "2025-04-14": {"dm": "08:20", "fm": "13:00", "dam": "13:30", "fam": "18:00", "total": 550}, "2025-04-15": {"dm": "08:00", "fm": "12:45", "dam": "13:30", "fam": "17:45", "total": 540}, "2025-04-16": {"dm": "08:20", "fm": "12:30", "dam": "13:20", "fam": "18:15", "total": 545}, "2025-04-17": {"dm": "07:45", "fm": "12:30", "dam": "13:30", "fam": "17:05", "total": 500}, "2025-04-18": {"dm": "08:00", "fm": "12:20", "dam": "13:40", "fam": "18:00", "total": 520}, "2025-04-21": {"dm": "08:10", "fm": "12:35", "dam": "13:30", "fam": "18:10", "total": 545}, "2025-04-22": {"dm": "07:35", "fm": "11:30", "dam": "13:20", "fam": "18:15", "total": 530}, "2025-04-23": {"dm": "08:00", "fm": "12:30", "dam": "13:30", "fam": "17:45", "total": 525}, "2025-04-24": {"dm": "07:30", "fm": "12:00", "dam": "13:30", "fam": "17:35", "total": 515}, "2025-05-09": {"dm": "08:00", "fm": "12:40", "dam": "13:30", "fam": "17:45", "total": 535}, "2025-05-12": {"dm": "08:00", "fm": "12:20", "dam": "13:40", "fam": "17:45", "total": 505}, "2025-05-13": {"dm": "08:35", "fm": "12:10", "dam": "13:30", "fam": "17:30", "total": 455}, "2025-05-14": {"dm": "08:05", "fm": "12:45", "dam": "13:30", "fam": "17:45", "total": 535}, "2025-05-15": {"dm": "07:50", "fm": "13:00", "dam": "13:30", "fam": "20:00", "total": 700}, "2025-05-16": {"dm": "07:35", "fm": "13:10", "dam": "13:30", "fam": "17:10", "total": 555}, "2025-05-19": {"dm": "07:30", "fm": "12:55", "dam": "13:55", "fam": "18:55", "total": 625}, "2025-05-20": {"dm": "07:15", "fm": "12:30", "dam": "13:30", "fam": "18:15", "total": 600}, "2025-05-21": {"dm": "07:05", "fm": "13:10", "dam": "13:50", "fam": "17:45", "total": 600}, "2025-05-22": {"dm": "08:10", "fm": "12:40", "dam": "13:40", "fam": "17:50", "total": 520}, "2025-05-23": {"dm": "08:05", "fm": "12:25", "dam": "12:45", "fam": "18:00", "total": 575}, "2025-05-26": {"dm": "07:00", "fm": "12:30", "dam": "14:00", "fam": "19:05", "total": 635}, "2025-05-27": {"dm": "07:30", "fm": "12:30", "dam": "13:20", "fam": "18:55", "total": 635}, "2025-05-28": {"dm": "07:10", "fm": "12:30", "dam": "13:10", "fam": "19:15", "total": 685}, "2025-06-02": {"dm": "07:35", "fm": "12:40", "dam": "14:20", "fam": "17:55", "total": 520}, "2025-06-03": {"dm": "07:55", "fm": "12:40", "dam": "13:50", "fam": "18:50", "total": 585}, "2025-06-04": {"dm": "07:20", "fm": "12:40", "dam": "13:40", "fam": "19:10", "total": 650}, "2025-06-05": {"dm": "07:20", "fm": "12:45", "dam": "13:40", "fam": "19:00", "total": 645}, "2025-06-06": {"dm": "07:30", "fm": "13:05", "dam": "13:40", "fam": "16:55", "total": 530}, "2025-06-10": {"dm": "07:55", "fm": "13:05", "dam": "13:45", "fam": "18:10", "total": 575}, "2025-06-11": {"dm": "07:25", "fm": "12:05", "dam": "13:20", "fam": "17:45", "total": 545}, "2025-06-12": {"dm": "07:40", "fm": "12:30", "dam": "13:30", "fam": "18:35", "total": 595}, "2025-06-13": {"dm": "07:20", "fm": "12:00", "dam": "13:30", "fam": "19:00", "total": 610}, "2025-06-16": {"dm": "07:50", "fm": "12:20", "dam": "13:20", "fam": "18:10", "total": 560}, "2025-06-17": {"dm": "08:50", "fm": "12:20", "dam": "13:35", "fam": "17:35", "total": 450}, "2025-06-18": {"dm": "08:45", "fm": "12:25", "dam": "13:35", "fam": "18:00", "total": 485}, "2025-06-19": {"dm": "08:15", "fm": "12:30", "dam": "13:30", "fam": "18:00", "total": 525}, "2025-06-20": {"dm": "08:10", "fm": "12:20", "dam": "13:30", "fam": "17:30", "total": 490}, "2025-06-23": {"dm": "08:45", "fm": "12:25", "dam": "13:45", "fam": "18:25", "total": 500}, "2025-06-24": {"dm": "08:00", "fm": "12:30", "dam": "13:30", "fam": "17:45", "total": 525}, "2025-06-25": {"dm": "08:45", "fm": "12:20", "dam": "13:30", "fam": "17:45", "total": 470}, "2025-06-26": {"dm": "08:00", "fm": "12:30", "dam": "13:45", "fam": "17:55", "total": 520}, "2025-06-27": {"dm": "08:20", "fm": "12:30", "dam": "13:30", "fam": "17:25", "total": 485}, "2025-06-30": {"dm": "08:00", "fm": "12:20", "dam": "13:40", "fam": "17:15", "total": 475}, "2025-07-01": {"dm": "08:05", "fm": "12:30", "dam": "12:45", "fam": "17:45", "total": 565}, "2025-07-02": {"dm": "07:15", "fm": "12:30", "dam": "13:15", "fam": "17:00", "total": 540}, "2025-07-03": {"dm": "07:00", "fm": "12:45", "dam": "13:15", "fam": "19:05", "total": 695}, "2025-07-04": {"dm": "07:20", "fm": "12:00", "dam": "13:15", "fam": "19:35", "total": 660}, "2025-08-04": {"dm": "07:45", "fm": "12:55", "dam": "13:25", "fam": "17:20", "total": 545}, "2025-08-05": {"dm": "07:30", "fm": "12:30", "dam": "13:05", "fam": "17:15", "total": 550}, "2025-08-06": {"dm": "07:50", "fm": "12:25", "dam": "13:25", "fam": "18:40", "total": 590}, "2025-08-07": {"dm": "08:15", "fm": "12:30", "dam": "13:35", "fam": "18:00", "total": 520}, "2025-08-08": {"dm": "08:00", "fm": "10:30", "dam": "13:35", "fam": "18:05", "total": 420}, "2025-08-11": {"dm": "07:30", "fm": "12:25", "dam": "13:20", "fam": "17:00", "total": 515}, "2025-08-12": {"dm": "08:15", "fm": "12:20", "dam": "13:20", "fam": "17:10", "total": 475}, "2025-08-13": {"dm": "08:30", "fm": "12:20", "dam": "13:35", "fam": "17:45", "total": 480}, "2025-08-14": {"dm": "07:55", "fm": "12:45", "dam": "14:00", "fam": "16:55", "total": 465}, "2025-08-18": {"dm": "08:15", "fm": "12:15", "dam": "12:55", "fam": "17:30", "total": 515}, "2025-08-19": {"dm": "07:50", "fm": "11:50", "dam": "13:15", "fam": "17:55", "total": 520}, "2025-08-20": {"dm": "08:10", "fm": "12:35", "dam": "13:35", "fam": "18:10", "total": 540}, "2025-08-21": {"dm": "08:15", "fm": "12:30", "dam": "13:35", "fam": "18:05", "total": 525}, "2025-08-22": {"dm": "07:05", "fm": "12:35", "dam": "13:35", "fam": "17:05", "total": 540}, "2025-08-25": {"dm": "07:50", "fm": "12:35", "dam": "13:10", "fam": "17:55", "total": 570}, "2025-08-26": {"dm": "07:35", "fm": "12:45", "dam": "13:20", "fam": "17:20", "total": 550}, "2025-08-27": {"dm": "07:35", "fm": "12:05", "dam": "13:15", "fam": "18:10", "total": 565}, "2025-08-28": {"dm": "08:05", "fm": "12:25", "dam": "13:15", "fam": "16:45", "total": 470}, "2025-08-29": {"dm": "07:45", "fm": "11:45", "dam": "14:00", "fam": "17:45", "total": 465}, "2025-09-02": {"dm": "08:40", "fm": "12:30", "dam": "14:00", "fam": "18:20", "total": 490}, "2025-09-03": {"dm": "07:50", "fm": "12:45", "dam": "13:50", "fam": "18:20", "total": 565}, "2025-09-04": {"dm": "08:00", "fm": "12:20", "dam": "13:00", "fam": "17:40", "total": 540}, "2025-09-05": {"dm": "07:20", "fm": "12:45", "dam": "13:30", "fam": "18:25", "total": 620}, "2025-09-08": {"dm": "07:35", "fm": "12:30", "dam": "13:15", "fam": "19:05", "total": 645}, "2025-09-09": {"dm": "07:55", "fm": "12:40", "dam": "13:40", "fam": "18:15", "total": 560}, "2025-09-10": {"dm": "07:45", "fm": "12:45", "dam": "13:45", "fam": "18:10", "total": 565}, "2025-09-11": {"dm": "08:05", "fm": "12:15", "dam": "13:30", "fam": "18:40", "total": 560}, "2025-09-12": {"dm": "08:05", "fm": "12:55", "dam": "13:25", "fam": "18:35", "total": 600}, "2025-09-15": {"dm": "07:25", "fm": "12:15", "dam": "12:40", "fam": "17:00", "total": 550}, "2025-09-16": {"dm": "07:40", "fm": "12:30", "dam": "13:20", "fam": "18:05", "total": 575}, "2025-09-17": {"dm": "07:50", "fm": "12:15", "dam": "13:15", "fam": "19:10", "total": 620}, "2025-09-18": {"dm": "08:30", "fm": "12:35", "dam": "13:35", "fam": "18:55", "total": 565}, "2025-09-19": {"dm": "07:45", "fm": "12:45", "dam": "13:15", "fam": "17:45", "total": 570}, "2025-09-22": {"dm": "07:30", "fm": "12:40", "dam": "13:30", "fam": "17:55", "total": 575}, "2025-09-23": {"dm": "07:45", "fm": "12:40", "dam": "13:05", "fam": "17:55", "total": 585}, "2025-09-24": {"dm": "08:10", "fm": "12:30", "dam": "13:50", "fam": "17:50", "total": 500}, "2025-09-25": {"dm": "08:00", "fm": "12:20", "dam": "13:30", "fam": "17:15", "total": 485}, "2025-09-26": {"dm": "09:00", "fm": "12:20", "dam": "14:15", "fam": "16:55", "total": 360}, "2025-09-29": {"dm": "07:35", "fm": "12:35", "dam": "13:20", "fam": "18:35", "total": 615}, "2025-09-30": {"dm": "07:35", "fm": "12:45", "dam": "13:20", "fam": "17:40", "total": 570}, "2025-10-01": {"dm": "07:30", "fm": "12:30", "dam": "14:00", "fam": "18:00", "total": 540}, "2025-10-02": {"dm": "07:40", "fm": "12:35", "dam": "13:20", "fam": "18:40", "total": 615}, "2025-10-03": {"dm": "07:00", "fm": "12:30", "dam": "14:00", "fam": "18:05", "total": 575}, "2025-10-06": {"dm": "08:00", "fm": "12:20", "dam": "12:45", "fam": "17:30", "total": 545}, "2025-10-07": {"dm": "07:35", "fm": "12:10", "dam": "12:35", "fam": "18:25", "total": 625}, "2025-10-08": {"dm": "06:40", "fm": "12:00", "dam": "13:30", "fam": "19:00", "total": 650}, "2025-10-09": {"dm": "08:00", "fm": "12:00", "dam": "14:00", "fam": "18:00", "total": 480}, "2025-10-10": {"dm": "08:15", "fm": "12:30", "dam": "13:30", "fam": "17:00", "total": 465}, "2025-10-13": {"dm": "08:10", "fm": "12:35", "dam": "13:30", "fam": "19:25", "total": 620}, "2025-10-14": {"dm": "07:45", "fm": "12:50", "dam": "13:40", "fam": "18:10", "total": 575}, "2025-10-15": {"dm": "08:45", "fm": "12:40", "dam": "13:25", "fam": "18:30", "total": 540}, "2025-10-16": {"dm": "08:00", "fm": "12:35", "dam": "13:50", "fam": "18:20", "total": 545}, "2025-10-17": {"dm": "07:00", "fm": "12:20", "dam": "14:10", "fam": "18:30", "total": 580}, "2025-10-27": {"dm": "08:00", "fm": "12:45", "dam": "13:40", "fam": "17:10", "total": 495}, "2025-10-28": {"dm": "07:55", "fm": "12:45", "dam": "13:40", "fam": "17:25", "total": 515}, "2025-10-29": {"dm": "09:15", "fm": "12:35", "dam": "14:20", "fam": "17:35", "total": 395}, "2025-10-30": {"dm": "08:00", "fm": "12:20", "dam": "13:20", "fam": "17:50", "total": 530}, "2025-10-31": {"dm": "07:50", "fm": "12:15", "dam": "13:30", "fam": "17:30", "total": 505}, "2025-11-03": {"dm": "07:55", "fm": "12:30", "dam": "13:30", "fam": "17:20", "total": 505}, "2025-11-04": {"dm": "09:00", "fm": "12:00", "dam": "14:15", "fam": "17:30", "total": 375}, "2025-11-05": {"dm": "09:00", "fm": "12:00", "dam": "13:30", "fam": "16:30", "total": 360}, "2025-11-06": {"dm": "08:10", "fm": "12:45", "dam": "13:15", "fam": "17:15", "total": 515}, "2025-11-07": {"dm": "09:00", "fm": "12:15", "dam": "14:00", "fam": "16:30", "total": 345}, "2025-11-10": {"dm": "08:10", "fm": "12:50", "dam": "13:20", "fam": "17:20", "total": 520}, "2025-11-12": {"dm": "08:05", "fm": "12:10", "dam": "13:50", "fam": "17:45", "total": 480}, "2025-11-13": {"dm": "08:25", "fm": "13:00", "dam": "13:30", "fam": "17:05", "total": 490}, "2025-11-14": {"dm": "09:00", "fm": "12:20", "dam": "13:20", "fam": "18:20", "total": 500}, "2025-11-17": {"dm": "07:55", "fm": "12:45", "dam": "13:30", "fam": "18:20", "total": 580}, "2025-11-18": {"dm": "08:15", "fm": "13:15", "dam": "13:55", "fam": "18:10", "total": 555}, "2025-11-19": {"dm": "08:05", "fm": "12:20", "dam": "13:00", "fam": "17:20", "total": 515}, "2025-11-20": {"dm": "08:00", "fm": "12:45", "dam": "13:30", "fam": "16:55", "total": 490}, "2025-11-21": {"dm": "07:05", "fm": "12:15", "dam": "13:00", "fam": "17:50", "total": 600}, "2025-11-24": {"dm": "08:00", "fm": "13:05", "dam": "13:30", "fam": "19:20", "total": 655}, "2025-11-25": {"dm": "08:20", "fm": "12:40", "dam": "13:25", "fam": "17:10", "total": 485}, "2025-11-26": {"dm": "08:05", "fm": "12:30", "dam": "13:30", "fam": "18:45", "total": 580}, "2025-11-27": {"dm": "07:55", "fm": "12:30", "dam": "13:30", "fam": "18:20", "total": 565}, "2025-11-28": {"dm": "08:45", "fm": "12:20", "dam": "13:35", "fam": "17:20", "total": 440}, "2025-12-01": {"dm": "08:00", "fm": "12:10", "dam": "13:20", "fam": "17:40", "total": 510}, "2025-12-02": {"dm": "08:25", "fm": "12:35", "dam": "13:35", "fam": "17:50", "total": 505}, "2025-12-03": {"dm": "08:30", "fm": "12:40", "dam": "13:40", "fam": "17:35", "total": 485}, "2025-12-04": {"dm": "07:45", "fm": "12:35", "dam": "13:40", "fam": "18:50", "total": 600}, "2025-12-05": {"dm": "07:45", "fm": "12:30", "dam": "13:30", "fam": "18:05", "total": 560}, "2025-12-08": {"dm": "08:10", "fm": "12:00", "dam": "13:00", "fam": "19:15", "total": 605}, "2025-12-09": {"dm": "07:55", "fm": "12:30", "dam": "13:30", "fam": "17:50", "total": 535}, "2025-12-10": {"dm": "08:15", "fm": "12:45", "dam": "13:30", "fam": "17:50", "total": 530}, "2025-12-11": {"dm": "08:50", "fm": "12:30", "dam": "13:15", "fam": "17:45", "total": 490}, "2025-12-12": {"dm": "08:05", "fm": "12:15", "dam": "13:00", "fam": "17:25", "total": 515}, "2025-12-15": {"dm": "07:45", "fm": "12:40", "dam": "13:20", "fam": "17:50", "total": 565}, "2025-12-16": {"dm": "08:15", "fm": "12:00", "dam": "14:30", "fam": "18:50", "total": 485}, "2025-12-17": {"dm": "08:30", "fm": "12:30", "dam": "13:30", "fam": "17:40", "total": 490}, "2025-12-18": {"dm": "08:40", "fm": "12:10", "dam": "14:15", "fam": "19:15", "total": 510}, "2025-12-29": {"dm": "07:55", "fm": "12:20", "dam": "14:15", "fam": "17:40", "total": 470}, "2025-12-30": {"dm": "08:25", "fm": "12:15", "dam": "13:10", "fam": "17:30", "total": 490}, "2025-12-31": {"dm": "08:25", "fm": "12:25", "dam": "13:00", "fam": "15:30", "total": 390}, "2026-01-02": {"dm": "08:20", "fm": "12:40", "dam": "13:40", "fam": "17:30", "total": 490}, "2026-01-05": {"dm": "08:05", "fm": "12:40", "dam": "13:35", "fam": "17:35", "total": 515}, "2026-01-06": {"dm": "08:00", "fm": "12:50", "dam": "13:30", "fam": "17:10", "total": 510}, "2026-01-07": {"dm": "08:10", "fm": "12:20", "dam": "13:00", "fam": "17:55", "total": 545}, "2026-01-08": {"dm": "08:15", "fm": "12:30", "dam": "13:40", "fam": "17:40", "total": 495}, "2026-01-09": {"dm": "08:30", "fm": "12:30", "dam": "13:30", "fam": "17:05", "total": 455}, "2026-01-12": {"dm": "07:35", "fm": "12:20", "dam": "13:15", "fam": "18:05", "total": 575}, "2026-01-13": {"dm": "08:00", "fm": "12:20", "dam": "12:55", "fam": "17:15", "total": 520}, "2026-01-14": {"dm": "08:00", "fm": "12:30", "dam": "13:40", "fam": "18:20", "total": 550}, "2026-01-15": {"dm": "08:00", "fm": "12:35", "dam": "13:35", "fam": "17:45", "total": 525}, "2026-01-16": {"dm": "07:50", "fm": "12:10", "dam": "", "fam": "", "total": 260}, "2026-01-19": {"dm": "08:10", "fm": "12:40", "dam": "13:25", "fam": "17:35", "total": 520}, "2026-01-20": {"dm": "08:00", "fm": "13:00", "dam": "13:45", "fam": "17:50", "total": 545}, "2026-01-21": {"dm": "08:00", "fm": "11:30", "dam": "13:30", "fam": "17:45", "total": 465}, "2026-01-22": {"dm": "08:30", "fm": "12:00", "dam": "13:45", "fam": "20:50", "total": 635}, "2026-01-23": {"dm": "08:00", "fm": "13:00", "dam": "13:30", "fam": "20:10", "total": 700}, "2026-01-24": {"dm": "10:00", "fm": "12:30", "dam": "", "fam": "", "total": 150}, "2026-01-26": {"dm": "08:00", "fm": "12:30", "dam": "13:15", "fam": "18:35", "total": 590}, "2026-01-27": {"dm": "07:50", "fm": "12:30", "dam": "13:30", "fam": "17:55", "total": 545}, "2026-01-28": {"dm": "08:15", "fm": "12:40", "dam": "13:25", "fam": "17:35", "total": 515}, "2026-01-29": {"dm": "08:00", "fm": "12:00", "dam": "12:45", "fam": "18:30", "total": 585}, "2026-01-30": {"dm": "07:50", "fm": "12:55", "dam": "13:30", "fam": "17:35", "total": 550}, "2026-02-02": {"dm": "08:00", "fm": "12:20", "dam": "13:25", "fam": "19:00", "total": 595}, "2026-02-03": {"dm": "07:30", "fm": "12:30", "dam": "13:30", "fam": "17:40", "total": 550}, "2026-02-04": {"dm": "08:00", "fm": "12:35", "dam": "13:55", "fam": "17:40", "total": 500}, "2026-02-05": {"dm": "08:30", "fm": "12:30", "dam": "13:15", "fam": "18:25", "total": 550}, "2026-02-06": {"dm": "07:20", "fm": "12:00", "dam": "13:30", "fam": "18:15", "total": 565}, "2026-02-16": {"dm": "07:45", "fm": "13:05", "dam": "13:30", "fam": "19:50", "total": 700}, "2026-02-17": {"dm": "08:10", "fm": "12:35", "dam": "13:20", "fam": "18:10", "total": 555}, "2026-02-18": {"dm": "08:00", "fm": "12:50", "dam": "13:40", "fam": "17:30", "total": 520}, "2026-02-19": {"dm": "08:00", "fm": "12:00", "dam": "12:45", "fam": "18:15", "total": 570}, "2026-02-20": {"dm": "08:00", "fm": "12:00", "dam": "13:00", "fam": "17:15", "total": 495}, "2026-02-23": {"dm": "08:05", "fm": "12:45", "dam": "13:30", "fam": "17:00", "total": 490}, "2026-02-24": {"dm": "07:55", "fm": "12:40", "dam": "13:30", "fam": "18:20", "total": 575}, "2026-02-25": {"dm": "08:50", "fm": "12:35", "dam": "13:50", "fam": "18:00", "total": 475}, "2026-02-26": {"dm": "08:45", "fm": "12:30", "dam": "13:15", "fam": "18:15", "total": 525}, "2026-02-27": {"dm": "07:05", "fm": "13:05", "dam": "13:55", "fam": "17:30", "total": 575}, "2026-03-02": {"dm": "08:00", "fm": "13:05", "dam": "13:35", "fam": "17:20", "total": 530}, "2026-03-03": {"dm": "08:05", "fm": "12:50", "dam": "13:35", "fam": "18:50", "total": 600}, "2026-03-04": {"dm": "08:15", "fm": "12:20", "dam": "13:20", "fam": "17:40", "total": 505}, "2026-03-05": {"dm": "08:25", "fm": "13:10", "dam": "13:50", "fam": "18:20", "total": 555}, "2026-03-06": {"dm": "07:45", "fm": "12:00", "dam": "13:00", "fam": "16:00", "total": 435}, "2026-03-09": {"dm": "08:05", "fm": "12:35", "dam": "13:15", "fam": "18:40", "total": 595}, "2026-03-10": {"dm": "08:10", "fm": "12:20", "dam": "14:00", "fam": "18:30", "total": 520}, "2026-03-11": {"dm": "08:30", "fm": "12:35", "dam": "", "fam": "", "total": 245}, "2026-03-12": {"dm": "08:10", "fm": "12:30", "dam": "13:30", "fam": "19:10", "total": 600}, "2026-03-13": {"dm": "07:25", "fm": "12:30", "dam": "13:30", "fam": "17:00", "total": 515}, "2026-03-16": {"dm": "08:10", "fm": "12:50", "dam": "13:20", "fam": "19:10", "total": 630}, "2026-03-17": {"dm": "07:45", "fm": "12:45", "dam": "13:25", "fam": "17:55", "total": 570}, "2026-03-18": {"dm": "08:30", "fm": "12:25", "dam": "13:30", "fam": "17:30", "total": 475}, "2026-03-19": {"dm": "06:45", "fm": "12:25", "dam": "14:05", "fam": "18:45", "total": 620}, "2026-03-20": {"dm": "07:05", "fm": "12:35", "dam": "13:30", "fam": "20:00", "total": 720}, "2026-03-23": {"dm": "07:30", "fm": "12:15", "dam": "12:45", "fam": "19:55", "total": 715}, "2026-03-24": {"dm": "07:40", "fm": "12:45", "dam": "13:30", "fam": "17:25", "total": 540}, "2026-03-25": {"dm": "08:25", "fm": "12:55", "dam": "13:25", "fam": "18:45", "total": 590}, "2026-03-26": {"dm": "08:15", "fm": "12:45", "dam": "13:35", "fam": "18:15", "total": 550}, "2026-03-27": {"dm": "07:10", "fm": "12:30", "dam": "13:30", "fam": "17:20", "total": 550}, "2026-03-30": {"dm": "08:15", "fm": "12:40", "dam": "13:30", "fam": "18:45", "total": 580}, "2026-03-31": {"dm": "07:45", "fm": "", "dam": "", "fam": "", "total": 0}};
+  let n = 0;
+  Object.keys(xl).forEach(k => { if (!existing[k]) { existing[k] = xl[k]; n++; } });
+  if (n > 0) { sd(existing); console.log('Importé: ' + n + ' entrées'); }
+}
+
+/* ── EXPORT CSV ── */
+function exportCSV() {
+  const d = gd();
+  const rows = [['Date','Jour','Debut matin','Fin matin','Debut AM','Fin AM','Total (min)','Total (h)','Absence','Humeur','Note bilan']];
+  Object.keys(d).sort().forEach(k => {
+    const e = d[k], dt = new Date(k + 'T00:00:00');
+    const jn = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][dt.getDay()];
+    const tot = e.total || 0;
+    const h = Math.floor(tot/60) + 'h' + String(tot%60).padStart(2,'0');
+    rows.push([k, jn, e.dm||'', e.fm||'', e.dam||'', e.fam||'', tot, h, e.absence||'', e.humeur||'', (e.absNote||'').replace(/;/g,'|')]);
+  });
+  const csv = rows.map(r => r.join(';')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'suivi-temps-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  showToast('📥 CSV exporté !');
+}
+
+/* ── EXPORT PDF GRAPHIQUES ── */
+function exportPDF() {
+  const w = window.open('', '_blank');
+  const d = gd();
+  const now = new Date();
+  const year = parseInt(document.getElementById('yearSel')?.value) || now.getFullYear();
+
+  // Stats annuelles pour l'année sélectionnée
+  const stats = getMonthStats(year);
+  const totalH = stats.reduce((a,s)=>a+s.hours,0);
+  const totalJ = stats.reduce((a,s)=>a+s.jours,0);
+  const moy = totalJ > 0 ? Math.round(totalH/totalJ) : 0;
+  const solde = totalH - totalJ*STD;
+  const absStats = {conge:0,rtt:0,ferie:0};
+  Object.keys(d).filter(k=>d[k].absence).forEach(k=>{ absStats[d[k].absence]=(absStats[d[k].absence]||0)+1; });
+
+  // Stats globales toutes années
+  let gTot=0,gJours=0;
+  Object.values(d).forEach(e=>{ if(e.total>0){gTot+=e.total;gJours++;} });
+  const gSolde=gTot-(gJours*STD);
+
+  // Barres mois
+  const MNS=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  const mx=Math.max(...stats.map(s=>s.hours),1);
+  const bars = stats.map((s,i)=>{
+    const h=Math.max(Math.round((s.hours/mx)*100),s.hours>0?4:0);
+    const col=s.hours>=STD*20?'#00d4aa':s.hours>0?'#ffd166':'#e8edf520';
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">
+      <div style="font-size:8px;color:#666;font-family:monospace">${s.hours>0?Math.floor(s.hours/60)+'h':''}</div>
+      <div style="width:100%;height:${h}px;background:${col};border-radius:3px 3px 1px 1px;min-height:2px;position:relative;">
+        ${s.conge+s.rtt+s.ferie>0?`<div style="position:absolute;bottom:0;left:0;right:0;height:4px;background:#f9731680;border-radius:0 0 1px 1px"></div>`:''}
+      </div>
+      <div style="font-size:8px;color:#999">${MNS[i]}</div>
+    </div>`;
+  }).join('');
+
+  // Courbe multi-années (SVG inline)
+  const years = [...new Set(Object.keys(d).map(k=>k.slice(0,4)))].filter(y=>+y>=2023).sort();
+  const COLS=['#00d4aa','#ffd166','#a78bfa','#60a5fa','#fb7185'];
+  const allStats=years.map(y=>getMonthStats(parseInt(y)));
+  const mxAll=Math.max(...allStats.flat().map(s=>s.hours),1);
+  const W=520,H=80,PX=10,PY=8;
+  let svgPaths='',svgLeg='';
+  years.forEach((y,yi)=>{
+    const col=COLS[yi%COLS.length];
+    const pts=allStats[yi].map((s,i)=>[PX+i*(W-PX*2)/11, H-PY-(s.hours/mxAll)*(H-PY*2)]);
+    const path=pts.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+    svgPaths+=`<path d="${path}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round"/>`;
+    pts.forEach(([x,yy],i)=>{ svgPaths+=`<circle cx="${x.toFixed(1)}" cy="${yy.toFixed(1)}" r="2" fill="${col}"/>`; });
+    svgLeg+=`<span style="display:inline-flex;align-items:center;gap:4px;margin-right:12px;font-size:10px"><span style="width:10px;height:3px;background:${col};border-radius:2px;display:inline-block"></span>${y}</span>`;
+  });
+  MNS.forEach((mo,i)=>{ const x=PX+i*(W-PX*2)/11; svgPaths+=`<text x="${x}" y="${H+8}" text-anchor="middle" font-size="7" fill="#999">${mo}</text>`; });
+  const refY=H-PY-((STD*20)/mxAll)*(H-PY*2);
+  svgPaths+=`<line x1="${PX}" y1="${refY.toFixed(1)}" x2="${W-PX}" y2="${refY.toFixed(1)}" stroke="#ccc" stroke-width="0.8" stroke-dasharray="3,2"/>`;
+
+  // Humeurs
+  const humeurs=Object.values(d).filter(e=>e.humeur).map(e=>e.humeur);
+  const hCount={};
+  humeurs.forEach(h=>hCount[h]=(hCount[h]||0)+1);
+  const topH=Object.entries(hCount).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`${k} <small>(${v}×)</small>`).join(' &nbsp;');
+
+  // Bilans récents
+  const bilans=Object.keys(d).filter(k=>k.startsWith('bilan_')).sort().reverse().slice(0,3);
+  const bilanHTML=bilans.map(bk=>{
+    const e=d[bk],ds=bk.replace('bilan_',''),dt=new Date(ds+'T00:00:00');
+    return `<div style="padding:10px 0;border-bottom:1px solid #f0f0f0">
+      <div style="font-size:10px;color:#00d4aa;font-weight:700;margin-bottom:4px">Semaine du ${dt.toLocaleDateString('fr-FR')}</div>
+      ${e.bilanReussite?`<div style="font-size:11px;color:#333;margin-bottom:3px">🏆 ${e.bilanReussite}</div>`:''}
+      ${e.bilanProgres?`<div style="font-size:11px;color:#555">🚀 ${e.bilanProgres}</div>`:''}
+    </div>`;
+  }).join('');
+
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Rapport Chrono Travail ${year}</title>
+  <style>
+    @media print{body{margin:0}}
+    *{box-sizing:border-box}
+    body{font-family:'Segoe UI',Arial,sans-serif;color:#111;padding:28px 32px;max-width:800px;margin:0 auto;font-size:13px}
+    h1{font-size:20px;font-weight:800;color:#0a1220;border-bottom:3px solid #00d4aa;padding-bottom:8px;margin-bottom:4px}
+    .meta{font-size:11px;color:#888;margin-bottom:20px}
+    h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#666;margin:20px 0 10px;display:flex;align-items:center;gap:6px}
+    h2::after{content:'';flex:1;height:1px;background:#eee}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px}
+    .kpi{background:#f7f9fc;border:1px solid #e8eaed;border-radius:10px;padding:12px 10px;text-align:center}
+    .kl{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+    .kv{font-size:22px;font-weight:800;font-family:monospace;letter-spacing:-1px}
+    .chart{display:flex;align-items:flex-end;gap:3px;height:120px;padding-bottom:20px;border-bottom:2px solid #eee;margin:0 0 4px}
+    .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+    .ac{background:#f7f9fc;border:1px solid #e8eaed;border-radius:10px;padding:12px;text-align:center}
+    .al{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+    .av{font-size:24px;font-weight:800;font-family:monospace}
+    .footer{margin-top:28px;font-size:9px;color:#bbb;border-top:1px solid #eee;padding-top:8px;text-align:center}
+    svg{overflow:visible;width:100%;display:block}
+  </style></head><body>
+  <h1>📊 Rapport Chrono Travail — ${year}</h1>
+  <div class="meta">Généré le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR').slice(0,5)} &nbsp;·&nbsp; Données de 2023-01-02 au ${Object.keys(d).filter(k=>!k.startsWith('bilan_')).sort().pop()}</div>
+
+  <h2>Statistiques ${year}</h2>
+  <div class="kpis">
+    <div class="kpi"><div class="kl">Heures totales</div><div class="kv" style="color:#00d4aa">${Math.floor(totalH/60)}h${String(totalH%60).padStart(2,'0')}</div></div>
+    <div class="kpi"><div class="kl">Jours travaillés</div><div class="kv">${totalJ}j</div></div>
+    <div class="kpi"><div class="kl">Moy. / jour</div><div class="kv" style="color:#ffd166">${Math.floor(moy/60)}h${String(moy%60).padStart(2,'0')}</div></div>
+    <div class="kpi"><div class="kl">Solde vs ${Math.round(STD/60)}h/j</div><div class="kv" style="color:${solde>=0?'#00d4aa':'#ff6b6b'}">${solde>=0?'+':''}${Math.floor(Math.abs(solde)/60)}h${String(Math.abs(solde)%60).padStart(2,'0')}</div></div>
+  </div>
+
+  <h2>Heures travaillées par mois (${year})</h2>
+  <div class="chart">${bars}</div>
+  <div style="display:flex;gap:16px;margin-bottom:4px;font-size:10px;color:#888">
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:8px;background:#00d4aa;border-radius:2px;display:inline-block"></span>≥ objectif</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:8px;background:#ffd166;border-radius:2px;display:inline-block"></span>Partiel</span>
+    <span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:2px;background:#f97316;display:inline-block"></span>Absence</span>
+  </div>
+
+  <h2>Comparaison par année (toutes données)</h2>
+  <svg viewBox="0 0 ${W} ${H+14}" style="height:${H+14}px">${svgPaths}</svg>
+  <div style="margin-top:4px">${svgLeg}</div>
+
+  <h2>Statistiques globales (toutes années)</h2>
+  <div class="kpis">
+    <div class="kpi"><div class="kl">Cumul total</div><div class="kv" style="color:#00d4aa">${Math.floor(gTot/60)}h</div></div>
+    <div class="kpi"><div class="kl">Total jours</div><div class="kv">${gJours}j</div></div>
+    <div class="kpi"><div class="kl">Solde global</div><div class="kv" style="color:${gSolde>=0?'#00d4aa':'#ff6b6b'}">${gSolde>=0?'+':''}${Math.floor(Math.abs(gSolde)/60)}h</div></div>
+    <div class="kpi"><div class="kl">Moy. globale</div><div class="kv" style="color:#ffd166">${gJours>0?Math.floor(gTot/gJours/60)+'h'+(gJours>0?String(Math.round(gTot/gJours)%60).padStart(2,'0'):''):'—'}</div></div>
+  </div>
+
+  <h2>Absences (toutes années)</h2>
+  <div class="grid3">
+    <div class="ac"><div class="al" style="color:#f97316">Congés</div><div class="av" style="color:#f97316">${absStats.conge}j</div></div>
+    <div class="ac"><div class="al" style="color:#c084fc">RTT</div><div class="av" style="color:#c084fc">${absStats.rtt}j</div></div>
+    <div class="ac"><div class="al" style="color:#60a5fa">Fériés</div><div class="av" style="color:#60a5fa">${absStats.ferie}j</div></div>
+  </div>
+
+  ${topH?`<h2>Humeurs les plus fréquentes</h2><div style="font-size:20px;padding:8px 0;line-height:2">${topH}</div>`:''}
+  ${bilanHTML?`<h2>Derniers bilans hebdomadaires</h2>${bilanHTML}`:''}
+
+  <div class="footer">Chrono Travail · Rapport généré le ${now.toLocaleDateString('fr-FR')} · Référence journalière : ${Math.round(STD/60)}h/j</div>
+  </body></html>`);
+  w.document.close();
+  setTimeout(()=>w.print(),600);
+}
+
+/* ── HUMEUR ── */
+const HUMEURS = [
+  {e:'😄',l:'Super'},
+  {e:'😊',l:'Bien'},
+  {e:'😐',l:'Neutre'},
+  {e:'😔',l:'Difficile'},
+  {e:'😤',l:'Stressé'},
+  {e:'🤩',l:'Excellent'},
+  {e:'😴',l:'Fatigué'},
+  {e:'🤒',l:'Pas bien'},
+  {e:'💪',l:'Productif'},
+  {e:'🎉',l:'Super jour'}
+];
+
+function saveHumeur(h) {
+  const d = gd(); const k = dk(cd);
+  if (!d[k]) d[k] = {};
+  if (d[k].humeur === h) {
+    delete d[k].humeur; // désélection
+  } else {
+    d[k].humeur = h;
+  }
+  sd(d);
+  renderHumeur();
+}
+
+function renderHumeur() {
+  const d = gd(); const e = d[dk(cd)] || {};
+  const el = document.getElementById('humeurZone');
+  const selEl = document.getElementById('humeurSelected');
+  if (!el) return;
+  el.innerHTML = HUMEURS.map(({e:em,l}) =>
+    `<button onclick="saveHumeur('${em}')" style="display:flex;flex-direction:column;align-items:center;gap:2px;font-size:20px;background:${e.humeur===em?'#00d4aa22':'none'};border:1.5px solid ${e.humeur===em?'var(--accent)':'var(--border)'};border-radius:10px;padding:6px 8px;cursor:pointer;transition:all .2s;min-width:46px" title="${l}">
+      ${em}<span style="font-size:8px;color:${e.humeur===em?'var(--accent)':'var(--text-muted)'};font-family:var(--mono)">${l}</span>
+    </button>`
+  ).join('');
+  if (selEl) {
+    const found = HUMEURS.find(h=>h.e===e.humeur);
+    selEl.textContent = found ? found.e + ' ' + found.l + ' — enregistré' : '';
+  }
+  // Bannière vendredi bilan
+  checkFridayBanner();
+}
+
+function checkFridayBanner() {
+  const settings = JSON.parse(localStorage.getItem('chrono_settings')||'{}');
+  const bilanDay = parseInt(settings.bilanDay||'5');
+  const banner = document.getElementById('bilanFridayBanner');
+  if (!banner) return;
+  const todayDow = cd.getDay();
+  // Vérifier si c'est le jour du bilan ET qu'on est sur aujourd'hui
+  const today = new Date(); today.setHours(0,0,0,0);
+  const isToday = cd.getTime() === today.getTime();
+  banner.style.display = (isToday && todayDow === bilanDay) ? 'block' : 'none';
+}
+
+function switchToBilan() {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelector('.tab[onclick*="bilan"]').classList.add('active');
+  document.getElementById('screen-bilan').classList.add('active');
+  showBilan();
+}
+
+/* ── BILAN SEMAINE ── */
+function getBilanKey() {
+  // Lundi de la semaine en cours
+  const d = new Date(cd); const dow = d.getDay();
+  d.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
+  return 'bilan_' + dk(d);
+}
+
+function saveBilan() {
+  const d = gd();
+  const k = getBilanKey();
+  if (!d[k]) d[k] = {};
+  d[k].bilanReussite = document.getElementById('bilanReussite').value;
+  d[k].bilanProgres = document.getElementById('bilanProgres').value;
+  sd(d);
+  showToast('✓ Bilan enregistré !');
+}
+
+function loadBilan() {
+  const d = gd(); const k = getBilanKey(); const e = d[k] || {};
+  const r = document.getElementById('bilanReussite');
+  const p = document.getElementById('bilanProgres');
+  if (r) r.value = e.bilanReussite || '';
+  if (p) p.value = e.bilanProgres || '';
+}
+
+/* ── PARAMÈTRES ── */
+function loadSettings() {
+  const s = JSON.parse(localStorage.getItem('chrono_settings') || '{}');
+  STD = Math.round((s.stdH || 7) * 60);
+  document.getElementById('setStdH').value = s.stdH || 7;
+  document.getElementById('setBilanDay').value = s.bilanDay || '5';
+  updateStdPreview();
+}
+
+function updateStdPreview(){
+  const v=parseFloat(document.getElementById('setStdH').value)||7;
+  const h=Math.floor(v),m=Math.round((v-h)*60);
+  const el=document.getElementById('stdPreview');
+  if(el)el.textContent='= '+h+'h'+String(m).padStart(2,'0')+' / jour';
+}
+function saveSettings() {
+  const stdH = Math.round(parseFloat(document.getElementById('setStdH').value)*10)/10 || 7;
+  const bilanDay = document.getElementById('setBilanDay').value;
+  localStorage.setItem('chrono_settings', JSON.stringify({stdH, bilanDay}));
+  STD = Math.round(stdH * 60);
+  showToast('✓ Paramètres sauvegardés');
+  updateCalcs();
+  updateStdPreview();
+}
+
+
+/* ── BILAN UI ── */
+function autoResize(el) { el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
+
+function showBilan() {
+  const d = gd();
+  const k = getBilanKey();
+  const now = cd;
+  const sw = new Date(now);
+  sw.setDate(now.getDate() - (now.getDay()===0?6:now.getDay()-1));
+  const se = new Date(sw.getTime() + 6*86400000);
+  
+  const lbl = document.getElementById('bilanWeekLabel');
+  if(lbl) lbl.textContent = 'Semaine du ' + sw.toLocaleDateString('fr-FR') + ' au ' + se.toLocaleDateString('fr-FR');
+
+  // week stats
+  let wTot=0, wJ=0;
+  for(let i=0;i<7;i++){
+    const dt=new Date(sw.getTime()+i*86400000);
+    const e=d[dk(dt)];
+    if(e?.total){wTot+=e.total;wJ++;}
+  }
+  const wSolde = wTot - wJ*STD;
+  const statsEl = document.getElementById('bilanStatsZone');
+  if(statsEl) statsEl.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+      <div><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Heures</div><div style="font-family:var(--mono);font-size:18px;color:var(--accent)">${m2s(wTot)}</div></div>
+      <div><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Jours</div><div style="font-family:var(--mono);font-size:18px;color:var(--text)">${wJ}j</div></div>
+      <div><div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px">Solde</div><div style="font-family:var(--mono);font-size:18px;color:${wSolde>=0?'var(--accent)':'var(--accent2)'}">${wSolde>=0?'+':''}${m2s(wSolde)}</div></div>
+    </div>`;
+
+  loadBilan();
+
+  // Bilan history
+  const bKeys = Object.keys(d).filter(k=>k.startsWith('bilan_')).sort().reverse().slice(0,8);
+  const histEl = document.getElementById('bilanHistory');
+  if(!histEl) return;
+  if(!bKeys.length){histEl.innerHTML='<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:16px">Aucun bilan enregistré</div>';return;}
+  histEl.innerHTML = bKeys.map(bk => {
+    const e = d[bk]; const dateStr = bk.replace('bilan_','');
+    const dt = new Date(dateStr+'T00:00:00');
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+      <div style="font-size:11px;font-family:var(--mono);color:var(--accent);margin-bottom:8px;">Semaine du ${dt.toLocaleDateString('fr-FR')}</div>
+      ${e.bilanReussite?`<div style="margin-bottom:6px;"><span style="font-size:10px;color:#00d4aa;font-weight:700">🏆 </span><span style="font-size:12px;color:var(--text-dim)">${e.bilanReussite}</span></div>`:''}
+      ${e.bilanProgres?`<div><span style="font-size:10px;color:#ffd166;font-weight:700">🚀 </span><span style="font-size:12px;color:var(--text-dim)">${e.bilanProgres}</span></div>`:''}
+    </div>`;
+  }).join('');
+}
+
+
+/* ── GRAPHIQUES HUMEURS ── */
+function fillHumeurYearSel(){
+  const sel=document.getElementById('humeurYearSel');
+  if(!sel)return;
+  const prev=sel.value;
+  const ys=getYears(),cur=new Date().getFullYear();
+  sel.innerHTML=ys.map(y=>`<option value="${y}"${y===(prev||String(cur))?' selected':''}>${y}</option>`).join('');
+}
+
+function renderHumeurGraphs(){
+  fillHumeurYearSel();
+  const d=gd();
+  const year=parseInt(document.getElementById('humeurYearSel')?.value)||new Date().getFullYear();
+  const MNS=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+
+  // ── Calendrier humeurs ──
+  const calEl=document.getElementById('humeurCalendar');
+  if(calEl){
+    let calHTML='';
+    for(let m=0;m<12;m++){
+      const daysInMonth=new Date(year,m+1,0).getDate();
+      let has=false;
+      let cells='';
+      for(let day=1;day<=daysInMonth;day++){
+        const k=`${year}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        const e=d[k];
+        const h=e?.humeur||'';
+        const abs=e?.absence||'';
+        const bg=abs?'var(--conge)11':h?'var(--accent)11':'var(--surface)';
+        const border=h?'var(--accent)':'var(--border)';
+        if(h)has=true;
+        cells+=`<div style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:5px;font-size:${h?'13':'9'}px;background:${bg};border:1px solid ${border};cursor:default;" title="${k}${h?' - '+h:''}">${h||'·'}</div>`;
+      }
+      calHTML+=`<div style="margin-bottom:10px;">
+        <div style="font-size:9px;color:var(--text-dim);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;">${MNS[m]}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:3px;">${cells}</div>
+      </div>`;
+    }
+    calEl.innerHTML=calHTML;
+  }
+
+  // ── Fréquence humeurs ──
+  const barsEl=document.getElementById('humeurBars');
+  if(barsEl){
+    const count={};
+    const totByH={};
+    const cntByH={};
+    Object.keys(d).filter(k=>{
+      if(k.startsWith('bilan_'))return false;
+      return k.startsWith(String(year));
+    }).forEach(k=>{
+      const e=d[k];
+      if(!e.humeur)return;
+      count[e.humeur]=(count[e.humeur]||0)+1;
+      if(e.total>0){totByH[e.humeur]=(totByH[e.humeur]||0)+e.total;cntByH[e.humeur]=(cntByH[e.humeur]||0)+1;}
+    });
+    const entries=Object.entries(count).sort((a,b)=>b[1]-a[1]);
+    const maxC=entries.length>0?entries[0][1]:1;
+    const hInfo=HUMEURS.reduce((acc,h)=>{acc[h.e]=h.l;return acc;},{});
+    barsEl.innerHTML=entries.length===0
+      ?'<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:16px">Aucune humeur enregistrée cette année</div>'
+      :entries.map(([em,cnt])=>{
+        const pct=Math.round((cnt/maxC)*100);
+        const avgH=cntByH[em]?m2s(Math.round(totByH[em]/cntByH[em])):'—';
+        return `<div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:18px;width:24px;text-align:center;">${em}</div>
+          <div style="flex:1;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+              <span style="font-size:11px;color:var(--text-dim)">${hInfo[em]||em}</span>
+              <span style="font-size:11px;font-family:var(--mono);color:var(--text)">${cnt}× · moy ${avgH}</span>
+            </div>
+            <div style="height:8px;background:var(--surface);border-radius:4px;overflow:hidden;">
+              <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:4px;transition:width .4s ease;"></div>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+  }
+
+  // ── Corrélation humeur/heures ──
+  const correlEl=document.getElementById('humeurCorrel');
+  if(correlEl){
+    const avgByH={};
+    const cntByH2={};
+    Object.keys(d).filter(k=>!k.startsWith('bilan_')&&k.startsWith(String(year))).forEach(k=>{
+      const e=d[k];
+      if(!e.humeur||!e.total)return;
+      avgByH[e.humeur]=(avgByH[e.humeur]||0)+e.total;
+      cntByH2[e.humeur]=(cntByH2[e.humeur]||0)+1;
+    });
+    const pairs=Object.entries(avgByH).map(([em,tot])=>[em,Math.round(tot/cntByH2[em])]).sort((a,b)=>b[1]-a[1]);
+    const maxT=pairs.length>0?pairs[0][1]:1;
+    const hInfo=HUMEURS.reduce((acc,h)=>{acc[h.e]=h.l;return acc;},{});
+    correlEl.innerHTML=pairs.length===0
+      ?'<div style="color:var(--text-muted);font-size:12px;text-align:center;padding:12px">Pas assez de données</div>'
+      :pairs.map(([em,avg])=>{
+        const pct=Math.round((avg/maxT)*100);
+        const col=avg>=STD?'var(--accent)':avg>STD*0.85?'var(--accent3)':'var(--accent2)';
+        return `<div style="display:flex;align-items:center;gap:10px;">
+          <div style="font-size:18px;width:24px;">${em}</div>
+          <div style="flex:1;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
+              <span style="font-size:11px;color:var(--text-dim)">${hInfo[em]||em}</span>
+              <span style="font-family:var(--mono);font-size:11px;color:${col}">${m2s(avg)}</span>
+            </div>
+            <div style="height:6px;background:var(--surface);border-radius:3px;">
+              <div style="height:100%;width:${pct}%;background:${col};border-radius:3px;"></div>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   GOOGLE DRIVE SYNC
+   ═══════════════════════════════════════════════════════ */
+
+const DRIVE_FILE_NAME = 'chrono-travail-backup.json';
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file';
+let driveToken = null;
+let driveFileId = null;
+let driveUser = null;
+let driveClientId = '';
+let driveAutoSync = false;
+let driveLastSync = null;
+let tokenClient = null;
+let gapiLoaded = false;
+let gsiLoaded = false;
+let pendingDriveData = null; // données Drive en attente de résolution conflit
+
+/* ── Chargement des libs Google ── */
+// Robuste : attend que GAPI client ET GSI soient prêts
+window._gsiReady = false;
+window._gapiClientReady = false;
+window._driveLibsReady = function() {
+  if (!window._gsiReady || !window._gapiClientReady) return;
+  gapiLoaded = true; gsiLoaded = true;
+  // Reconnexion silencieuse si config sauvegardée
+  const saved = getDriveConfig();
+  if (saved.clientId) {
+    driveClientId = saved.clientId;
+    driveAutoSync = saved.autoSync || false;
+    const ci = document.getElementById('driveClientId');
+    const as = document.getElementById('driveAutoSync');
+    if(ci) ci.value = driveClientId;
+    if(as) as.checked = driveAutoSync;
+    setupTokenClient(true);
+  }
+};
+
+function getDriveConfig() {
+  try { return JSON.parse(localStorage.getItem('chrono_drive_cfg') || '{}'); } catch(e) { return {}; }
+}
+function saveDriveConfig(cfg) { localStorage.setItem('chrono_drive_cfg', JSON.stringify(cfg)); }
+
+/* ── Init OAuth token client ── */
+function setupTokenClient(silent = false) {
+  if (!driveClientId) return;
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: driveClientId,
+    scope: DRIVE_SCOPE,
+    callback: (resp) => {
+      // Réactiver le bouton connecter si présent
+      const btn = document.getElementById('btnConnectDrive');
+      if(btn) { btn.textContent='🔗 Connecter Google Drive'; btn.disabled=false; btn.style.opacity='1'; }
+      if (resp.error) {
+        if (resp.error === 'popup_closed_by_user' || resp.error === 'access_denied') {
+          updateDriveStatus('Connexion annulée', false);
+          showToast('Connexion annulée');
+        } else if (resp.error === 'invalid_client') {
+          updateDriveStatus('Client ID invalide', false);
+          showToast('⚠ Client ID invalide — vérifiez la valeur copiée');
+        } else {
+          updateDriveStatus('Erreur : ' + resp.error, false);
+          showToast('⚠ Erreur Drive : ' + resp.error);
+        }
+        console.error('Drive auth error:', resp.error);
+        return;
+      }
+      driveToken = resp.access_token;
+      onDriveConnected();
+    },
+  });
+  if (!silent) {
+    tokenClient.requestAccessToken({ prompt: 'consent' });
+  } else {
+    // Tentative silencieuse sans popup
+    tokenClient.requestAccessToken({ prompt: '' });
+  }
+}
+
+/* ── Connexion initiée par bouton ── */
+function initDriveAuthWithFeedback(btn) {
+  btn.textContent = '⏳ Connexion…';
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+  setTimeout(() => {
+    btn.textContent = '🔗 Connecter Google Drive';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }, 5000); // reset après 5s si rien ne se passe
+  initDriveAuth();
+}
+function initDriveAuth() {
+  driveClientId = document.getElementById('driveClientId').value.trim();
+  driveAutoSync = document.getElementById('driveAutoSync').checked;
+  if (!driveClientId) { showToast('⚠ Entrez votre Client ID'); return; }
+  // Vérifier que les libs sont chargées
+  if (typeof google === 'undefined' || !google.accounts || typeof gapi === 'undefined') {
+    showToast('⏳ Bibliothèques Google en cours de chargement, réessayez dans 5s…');
+    // Tentative de chargement manuel
+    setTimeout(() => {
+      if (typeof gapi !== 'undefined') {
+        gapi.load('client', function(){ window._gapiClientReady=true; });
+      }
+    }, 2000);
+    return;
+  }
+  saveDriveConfig({ clientId: driveClientId, autoSync: driveAutoSync });
+  setupTokenClient(false);
+}
+
+/* ── Post-connexion ── */
+async function onDriveConnected() {
+  // Récupérer infos utilisateur
+  try {
+    const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: 'Bearer ' + driveToken }
+    });
+    driveUser = await r.json();
+    document.getElementById('driveUserName').textContent = driveUser.name || '—';
+    document.getElementById('driveUserEmail').textContent = driveUser.email || '—';
+  } catch(e) {}
+
+  updateDriveStatus('Connecté', true);
+  document.getElementById('driveConfigZone').style.display = 'none';
+  document.getElementById('driveConnectedZone').style.display = 'block';
+
+  // Chercher le fichier de backup existant
+  await findDriveFile();
+
+  if (driveFileId) {
+    // Fichier trouvé → vérifier conflit
+    await checkDriveConflict();
+  } else {
+    // Première connexion → sauvegarder immédiatement
+    await driveSaveNow(true);
+  }
+}
+
+/* ── Trouver le fichier backup sur Drive ── */
+async function findDriveFile() {
+  try {
+    const q = encodeURIComponent(`name='${DRIVE_FILE_NAME}' and trashed=false`);
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name,modifiedTime)`, {
+      headers: { Authorization: 'Bearer ' + driveToken }
+    });
+    const data = await r.json();
+    if (data.files && data.files.length > 0) {
+      driveFileId = data.files[0].id;
+      driveLastSync = data.files[0].modifiedTime;
+      updateSyncInfo();
+    }
+  } catch(e) { console.error('findDriveFile error:', e); }
+}
+
+/* ── Vérification conflit ── */
+async function checkDriveConflict() {
+  if (!driveFileId) return;
+  try {
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`, {
+      headers: { Authorization: 'Bearer ' + driveToken }
+    });
+    const driveData = await r.json();
+    const localData = gd();
+
+    const localKeys = Object.keys(localData).filter(k => !k.startsWith('bilan_'));
+    const driveKeys = Object.keys(driveData).filter(k => !k.startsWith('bilan_'));
+
+    // Comparer timestamps de modification
+    const localLast = localKeys.sort().pop() || '';
+    const driveLast = driveKeys.sort().pop() || '';
+    const localCount = localKeys.length;
+    const driveCount = driveKeys.length;
+
+    if (localCount === driveCount && localLast === driveLast) {
+      // Pas de conflit apparent
+      showToast('✓ Drive synchronisé');
+      return;
+    }
+
+    // Conflit détecté → afficher dialogue
+    pendingDriveData = driveData;
+    const driveDate = driveLastSync ? new Date(driveLastSync).toLocaleDateString('fr-FR') : '—';
+    document.getElementById('driveConflictInfo').innerHTML =
+      `<strong style="color:var(--text)">Données locales :</strong> ${localCount} entrées (dernière : ${localLast})<br>` +
+      `<strong style="color:var(--text)">Données Drive :</strong> ${driveCount} entrées (dernière : ${driveLast})<br>` +
+      `<span style="color:var(--text-muted)">Sauvegarde Drive du ${driveDate}</span>`;
+    document.getElementById('driveConflictModal').classList.add('open');
+  } catch(e) {
+    console.error('checkDriveConflict error:', e);
+    showToast('⚠ Erreur lecture Drive');
+  }
+}
+
+/* ── Résolution de conflit ── */
+function resolveConflict(choice) {
+  closeConflictModal();
+  if (!pendingDriveData) return;
+
+  if (choice === 'local') {
+    // Garder local, écraser Drive
+    driveSaveNow(true);
+  } else if (choice === 'drive') {
+    // Remplacer local par Drive
+    sd(pendingDriveData);
+    updateDate(); loadEntry(); updateCumul();
+    showToast('✓ Données restaurées depuis Drive');
+  } else if (choice === 'merge') {
+    // Fusionner : toutes les clés, Drive gagne sur les dates communes
+    const local = gd();
+    const merged = { ...local, ...pendingDriveData };
+    sd(merged);
+    updateDate(); loadEntry();
+    showToast('✓ Données fusionnées');
+    driveSaveNow(true); // remonter la fusion sur Drive
+  }
+  pendingDriveData = null;
+}
+
+function closeConflictModal() {
+  document.getElementById('driveConflictModal').classList.remove('open');
+}
+
+/* ── Sauvegarde vers Drive ── */
+async function driveSaveNow(silent = false) {
+  if (!driveToken) { showToast('⚠ Non connecté à Drive'); return; }
+  const statusEl = document.getElementById('driveSaveStatus');
+  if (statusEl) statusEl.textContent = '⏳';
+
+  try {
+    const payload = JSON.stringify(gd());
+    const boundary = 'chrono_boundary_' + Date.now();
+    const metadata = JSON.stringify({ name: DRIVE_FILE_NAME, mimeType: 'application/json' });
+
+    let url, method;
+    if (driveFileId) {
+      url = `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`;
+      method = 'PATCH';
+    } else {
+      url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+      method = 'POST';
+    }
+
+    const body = `--${boundary}\r\nContent-Type: application/json\r\n\r\n${metadata}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${payload}\r\n--${boundary}--`;
+
+    const r = await fetch(url, {
+      method,
+      headers: {
+        Authorization: 'Bearer ' + driveToken,
+        'Content-Type': `multipart/related; boundary=${boundary}`
+      },
+      body
+    });
+
+    if (!r.ok) throw new Error(await r.text());
+    const result = await r.json();
+    driveFileId = result.id;
+    driveLastSync = new Date().toISOString();
+    if (statusEl) statusEl.textContent = '✓';
+    setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2000);
+    updateSyncInfo();
+    if (!silent) showToast('☁️ Sauvegardé sur Drive !');
+  } catch(e) {
+    console.error('driveSaveNow error:', e);
+    if (statusEl) statusEl.textContent = '✗';
+    if (!silent) showToast('⚠ Erreur sauvegarde Drive');
+    // Token peut avoir expiré → relancer auth
+    if (e.message && e.message.includes('401')) driveToken = null;
+  }
+}
+
+/* ── Restauration depuis Drive ── */
+async function driveRestoreNow() {
+  if (!driveToken) { showToast('⚠ Non connecté à Drive'); return; }
+  if (!driveFileId) { showToast('⚠ Aucune sauvegarde trouvée'); return; }
+  await checkDriveConflict();
+}
+
+/* ── Auto-sync : appelé après chaque saveEntry ── */
+function driveAutoSyncIfEnabled() {
+  const cfg = getDriveConfig();
+  if (cfg.autoSync && driveToken) {
+    driveSaveNow(true);
+  }
+}
+
+/* ── Déconnexion ── */
+function driveDisconnect() {
+  if (driveToken) {
+    google.accounts.oauth2.revoke(driveToken, ()=>{});
+    driveToken = null;
+  }
+  driveFileId = null; driveUser = null;
+  saveDriveConfig({});
+  document.getElementById('driveConfigZone').style.display = 'block';
+  document.getElementById('driveConnectedZone').style.display = 'none';
+  document.getElementById('driveClientId').value = '';
+  document.getElementById('driveAutoSync').checked = false;
+  updateDriveStatus('Déconnecté', false);
+  showToast('Drive déconnecté');
+}
+
+/* ── UI helpers ── */
+function updateDriveStatus(msg, connected) {
+  const el = document.getElementById('driveStatusBadge');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = connected ? 'var(--accent)' : 'var(--text-muted)';
+}
+
+function updateSyncInfo() {
+  const el = document.getElementById('driveSyncInfo');
+  if (!el) return;
+  if (driveLastSync) {
+    const d = new Date(driveLastSync);
+    el.textContent = '⏱ Dernière sync : ' + d.toLocaleDateString('fr-FR') + ' ' + d.toLocaleTimeString('fr-FR').slice(0,5);
+  } else {
+    el.textContent = 'Aucune synchronisation encore';
+  }
+}
+
+function showDriveHelp() {
+  document.getElementById('driveHelpModal').classList.add('open');
+}
+
+/* ── Afficher l'origine courante ── */
+function updateOriginDisplay() {
+  const el = document.getElementById('driveOriginDisplay');
+  if (!el) return;
+  const origin = window.location.origin;
+  if (origin.startsWith('file://') || origin === 'null') {
+    el.innerHTML = '<span style="color:var(--accent2)">⚠ Fichier local — Google Drive nécessite un hébergement HTTPS<br><a href="#" onclick="showDriveHelp();return false;" style="color:#4285f4">Voir le guide</a></span>';
+  } else {
+    el.textContent = origin;
+  }
+}
+
+/* ── INIT ── */
+const nowI=new Date();
+const _ym=`${nowI.getFullYear()}-${String(nowI.getMonth()+1).padStart(2,'0')}`;
+// Initialiser les filtres historique sur le mois courant
+const hf=document.getElementById('histFrom');if(hf)hf.value=_ym;
+const ht=document.getElementById('histTo');if(ht)ht.value=_ym;
+// Pas de filtre par défaut sur le cumul
+loadSettings();
+importExcelData();
+updateDate();
+loadEntry();
+loadBilan();
+renderHumeur();
+updateOriginDisplay();
+// Charger les bibliothèques Google au démarrage
+// Les libs Google se chargent via les callbacks onload dans les balises <script>
+// window._driveLibsReady() est appelé automatiquement quand les deux sont prêts
+// Pré-remplir le Client ID si déjà sauvegardé
+const _driveCfg = getDriveConfig();
+if (_driveCfg.clientId) {
+  document.getElementById('driveClientId').value = _driveCfg.clientId;
+  document.getElementById('driveAutoSync').checked = _driveCfg.autoSync || false;
+}
+</script>
+</body>
+</html>

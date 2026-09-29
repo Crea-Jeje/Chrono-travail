@@ -76,7 +76,10 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:1
 .time-field label{display:block;font-size:9px;color:var(--text-dim);font-family:var(--mono);margin-bottom:5px;letter-spacing:.5px;}
 .time-field input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:var(--mono);font-size:19px;font-weight:500;padding:10px 4px;text-align:center;transition:border-color .2s;}
 .time-field input:focus{outline:none;border-color:var(--accent);}
-.time-field input::-webkit-calendar-picker-indicator{display:none;}
+document.querySelectorAll('input[type="time"]').forEach(i=>{
+  i.addEventListener('click',()=>{ try{ i.showPicker(); }catch(e){} });
+});
+
 .quick-now{background:none;border:1px solid var(--border);color:var(--text-dim);font-family:var(--mono);font-size:10px;padding:5px 7px;border-radius:7px;cursor:pointer;white-space:nowrap;transition:all .15s;margin-top:18px;}
 .quick-now:active{background:var(--border);}
 .duration-bar{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-top:8px;display:flex;align-items:center;justify-content:space-between;}
